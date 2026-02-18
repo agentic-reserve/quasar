@@ -513,6 +513,16 @@ pub fn account(attr: TokenStream, item: TokenStream) -> TokenStream {
     let disc_bytes = &args.discriminator;
     let disc_len = disc_bytes.len();
 
+    let disc_values: Vec<u8> = disc_bytes.iter()
+        .map(|lit| lit.base10_parse::<u8>().expect("discriminator byte must be 0-255"))
+        .collect();
+    if disc_values.iter().all(|&b| b == 0) {
+        return syn::Error::new_spanned(
+            &args.discriminator[0],
+            "discriminator must contain at least one non-zero byte; all-zero discriminators are indistinguishable from uninitialized account data",
+        ).to_compile_error().into();
+    }
+
     let disc_indices: Vec<usize> = (0..disc_len).collect();
 
     let field_types: Vec<_> = match &input.data {
@@ -544,6 +554,9 @@ pub fn account(attr: TokenStream, item: TokenStream) -> TokenStream {
             #[inline(always)]
             fn check(view: &AccountView) -> Result<(), ProgramError> {
                 let __data = unsafe { view.borrow_unchecked() };
+                if __data.len() < #disc_len + core::mem::size_of::<#name>() {
+                    return Err(ProgramError::AccountDataTooSmall);
+                }
                 #(
                     if unsafe { *__data.get_unchecked(#disc_indices) } != #disc_bytes {
                         return Err(ProgramError::InvalidAccountData);
@@ -574,6 +587,15 @@ pub fn account(attr: TokenStream, item: TokenStream) -> TokenStream {
             #[inline(always)]
             pub fn init_signed(self, account: &mut Initialize<Self>, payer: &AccountView, rent: Option<&Rent>, signers: &[quasar_core::cpi::Signer]) -> Result<(), ProgramError> {
                 let view = account.to_account_view();
+
+                {
+                    let __existing = unsafe { view.borrow_unchecked() };
+                    if __existing.len() >= Self::DISCRIMINATOR.len()
+                        && __existing[..Self::DISCRIMINATOR.len()] == *Self::DISCRIMINATOR
+                    {
+                        return Err(QuasarError::AccountAlreadyInitialized.into());
+                    }
+                }
 
                 use quasar_core::sysvars::Sysvar;
                 let lamports = match rent {
