@@ -1,4 +1,3 @@
-use quasar_core::cpi::system::SYSTEM_PROGRAM_ID;
 use quasar_core::prelude::*;
 
 use crate::constants::{SPL_TOKEN_ID, TOKEN_2022_ID};
@@ -10,7 +9,8 @@ use crate::token_2022::{Mint2022Account, Token2022Account};
 
 #[inline(always)]
 fn is_token_program_owner(view: &AccountView) -> bool {
-    view.owned_by(&SPL_TOKEN_ID) || view.owned_by(&TOKEN_2022_ID)
+    let owner = unsafe { view.owner() };
+    quasar_core::keys_eq(owner, &SPL_TOKEN_ID) || quasar_core::keys_eq(owner, &TOKEN_2022_ID)
 }
 
 /// Extension trait providing `.init()` on `Initialize<T>` for token account types.
@@ -77,7 +77,7 @@ pub trait InitToken: AsAccountView + Sized {
         rent: Option<&Rent>,
     ) -> Result<(), ProgramError> {
         let view = self.to_account_view();
-        if view.owned_by(&SYSTEM_PROGRAM_ID) {
+        if quasar_core::is_system_program(unsafe { view.owner() }) {
             self.init(system_program, payer, token_program, mint, owner, rent)
         } else {
             // Validate that the account is owned by a token program.
@@ -176,7 +176,7 @@ pub trait InitMint: AsAccountView + Sized {
         rent: Option<&Rent>,
     ) -> Result<(), ProgramError> {
         let view = self.to_account_view();
-        if view.owned_by(&SYSTEM_PROGRAM_ID) {
+        if quasar_core::is_system_program(unsafe { view.owner() }) {
             self.init(
                 system_program,
                 payer,

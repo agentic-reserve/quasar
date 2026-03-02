@@ -84,3 +84,34 @@ pub mod return_data;
 pub mod traits;
 /// Utility functions
 pub mod utils;
+
+/// 32-byte address comparison via four u64 word comparisons.
+///
+/// Short-circuits on the first non-matching word — wrong owner fails fast
+/// on the first 8 bytes. Native-width u64 ops on SBF (64-bit target).
+#[inline(always)]
+pub fn keys_eq(a: &solana_address::Address, b: &solana_address::Address) -> bool {
+    let a: &[u8] = a.as_ref();
+    let b: &[u8] = b.as_ref();
+    u64::from_le_bytes(a[..8].try_into().unwrap()) == u64::from_le_bytes(b[..8].try_into().unwrap())
+        && u64::from_le_bytes(a[8..16].try_into().unwrap())
+            == u64::from_le_bytes(b[8..16].try_into().unwrap())
+        && u64::from_le_bytes(a[16..24].try_into().unwrap())
+            == u64::from_le_bytes(b[16..24].try_into().unwrap())
+        && u64::from_le_bytes(a[24..32].try_into().unwrap())
+            == u64::from_le_bytes(b[24..32].try_into().unwrap())
+}
+
+/// Checks if an address is all zeros (the System program address).
+///
+/// OR-folds four u64 words — half the loads of a full comparison since
+/// there's no second operand.
+#[inline(always)]
+pub fn is_system_program(addr: &solana_address::Address) -> bool {
+    let a: &[u8] = addr.as_ref();
+    u64::from_le_bytes(a[..8].try_into().unwrap())
+        | u64::from_le_bytes(a[8..16].try_into().unwrap())
+        | u64::from_le_bytes(a[16..24].try_into().unwrap())
+        | u64::from_le_bytes(a[24..32].try_into().unwrap())
+        == 0
+}

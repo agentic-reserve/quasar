@@ -28,7 +28,10 @@ impl AccountCheck for InterfaceTokenAccount {
 impl CheckOwner for InterfaceTokenAccount {
     #[inline(always)]
     fn check_owner(view: &AccountView) -> Result<(), ProgramError> {
-        if !view.owned_by(&SPL_TOKEN_ID) && !view.owned_by(&TOKEN_2022_ID) {
+        let owner = unsafe { view.owner() };
+        if !quasar_core::keys_eq(owner, &SPL_TOKEN_ID)
+            && !quasar_core::keys_eq(owner, &TOKEN_2022_ID)
+        {
             return Err(ProgramError::IllegalOwner);
         }
         Ok(())
@@ -73,7 +76,10 @@ impl AccountCheck for InterfaceMintAccount {
 impl CheckOwner for InterfaceMintAccount {
     #[inline(always)]
     fn check_owner(view: &AccountView) -> Result<(), ProgramError> {
-        if !view.owned_by(&SPL_TOKEN_ID) && !view.owned_by(&TOKEN_2022_ID) {
+        let owner = unsafe { view.owner() };
+        if !quasar_core::keys_eq(owner, &SPL_TOKEN_ID)
+            && !quasar_core::keys_eq(owner, &TOKEN_2022_ID)
+        {
             return Err(ProgramError::IllegalOwner);
         }
         Ok(())

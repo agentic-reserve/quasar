@@ -89,7 +89,7 @@ macro_rules! impl_single_owner {
         impl CheckOwner for $ty {
             #[inline(always)]
             fn check_owner(view: &AccountView) -> Result<(), ProgramError> {
-                if !view.owned_by(&$id) {
+                if !quasar_core::keys_eq(unsafe { view.owner() }, &$id) {
                     return Err(ProgramError::IllegalOwner);
                 }
                 Ok(())

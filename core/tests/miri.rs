@@ -91,7 +91,7 @@ impl AccountBuffer {
     fn new(data_len: usize) -> Self {
         let byte_len =
             size_of::<RuntimeAccount>() + data_len + MAX_PERMITTED_DATA_INCREASE + size_of::<u64>();
-        let u64_count = (byte_len + 7) / 8;
+        let u64_count = byte_len.div_ceil(8);
         Self {
             inner: vec![0; u64_count],
         }
@@ -99,7 +99,7 @@ impl AccountBuffer {
 
     /// Allocation with exact byte count (no extra slack beyond alignment padding).
     fn exact(byte_len: usize) -> Self {
-        let u64_count = (byte_len + 7) / 8;
+        let u64_count = byte_len.div_ceil(8);
         Self {
             inner: vec![0; u64_count],
         }
@@ -169,7 +169,7 @@ impl MultiAccountBuffer {
                 MultiAccountEntry::Duplicate { .. } => size_of::<u64>(),
             })
             .sum();
-        let u64_count = (total_bytes + 7) / 8;
+        let u64_count = total_bytes.div_ceil(8);
         let mut buf = Self {
             inner: vec![0; u64_count],
         };
@@ -1384,7 +1384,7 @@ fn boundary_pointer_subtraction_within_allocation() {
     let remaining_aligned = (remaining_size + 7) & !7;
     let ix_data_len = 8usize; // use 8 to keep u64 alignment
     let total = remaining_aligned + size_of::<u64>() + ix_data_len + 32;
-    let u64_count = (total + 7) / 8;
+    let u64_count = total.div_ceil(8);
 
     let mut buffer: Vec<u64> = vec![0; u64_count];
     let base = buffer.as_mut_ptr() as *mut u8;
@@ -1452,7 +1452,7 @@ fn parse_simulation_dup_from_partially_initialized_buf() {
     let acct1_size = (ACCOUNT_HEADER + acct1_data_len + 7) & !7;
     let dup_size = size_of::<u64>();
     let total = size_of::<u64>() + acct0_size + acct1_size + dup_size;
-    let u64_count = (total + 7) / 8;
+    let u64_count = total.div_ceil(8);
 
     let mut buffer: Vec<u64> = vec![0; u64_count];
     let base = buffer.as_mut_ptr() as *mut u8;
@@ -2255,4 +2255,35 @@ fn instruction_vec_arg_from_raw_parts_exact_boundary() {
     // Read last element — touches bytes [tail.len()-8..tail.len()]
     assert_eq!(slice[9].get(), 9);
     assert_eq!(slice[0].get(), 0);
+}
+
+// ===========================================================================
+// 12. Account::close — post-close rejection
+//
+// The basic close mechanics (lamport drain, owner reassign, data_len zero)
+// are tested above in close_transfers_lamports_and_zeroes_fields (section 11).
+// These tests verify that a closed account is properly REJECTED by the
+// validation pipeline — the security-critical invariant.
+// ===========================================================================
+
+#[test]
+fn close_rejected_by_from_account_view() {
+    // After close, Account::from_account_view must fail because
+    // the owner has been reassigned to the system program.
+    let mut buf = make_zc_buffer();
+    let view = unsafe { buf.view() };
+    let account = Account::<TestAccountType>::from_account_view_mut(&view).unwrap();
+
+    let mut dest_buf = AccountBuffer::new(0);
+    dest_buf.init([2u8; 32], [0u8; 32], 0, 0, false, true);
+    let dest_view = unsafe { dest_buf.view() };
+
+    assert!(account.close(&dest_view).is_ok());
+
+    // CheckOwner sees system program, expects TEST_OWNER — must reject
+    let result = Account::<TestAccountType>::from_account_view(&view);
+    assert!(
+        result.is_err(),
+        "from_account_view must reject a closed account (wrong owner)"
+    );
 }

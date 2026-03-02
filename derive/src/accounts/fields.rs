@@ -562,7 +562,7 @@ pub(super) fn process_fields(
                     // init_if_needed for token accounts
                     init_blocks.push(quote! {
                         {
-                            if #field_name.owned_by(&quasar_core::cpi::system::SYSTEM_PROGRAM_ID) {
+                            if quasar_core::is_system_program(unsafe { #field_name.owner() }) {
                                 let __init_lamports = __shared_rent.try_minimum_balance(
                                     quasar_spl::TokenAccountState::LEN
                                 )?;
@@ -586,7 +586,7 @@ pub(super) fn process_fields(
                     // init for token accounts
                     init_blocks.push(quote! {
                         {
-                            if !#field_name.owned_by(&quasar_core::cpi::system::SYSTEM_PROGRAM_ID) {
+                            if !quasar_core::is_system_program(unsafe { #field_name.owner() }) {
                                 return Err(ProgramError::AccountAlreadyInitialized);
                             }
                             let __init_lamports = __shared_rent.try_minimum_balance(
@@ -629,7 +629,7 @@ pub(super) fn process_fields(
                     // init_if_needed for program accounts
                     init_blocks.push(quote! {
                         {
-                            if #field_name.owned_by(&quasar_core::cpi::system::SYSTEM_PROGRAM_ID) {
+                            if quasar_core::is_system_program(unsafe { #field_name.owner() }) {
                                 let __init_space = #space_expr;
                                 let __init_lamports = __shared_rent.try_minimum_balance(__init_space as usize)?;
                                 let __init_cpi = quasar_core::cpi::system::create_account(
@@ -653,7 +653,7 @@ pub(super) fn process_fields(
                     // init for program accounts
                     init_blocks.push(quote! {
                         {
-                            if !#field_name.owned_by(&quasar_core::cpi::system::SYSTEM_PROGRAM_ID) {
+                            if !quasar_core::is_system_program(unsafe { #field_name.owner() }) {
                                 return Err(ProgramError::AccountAlreadyInitialized);
                             }
                             let __init_space = #space_expr;
