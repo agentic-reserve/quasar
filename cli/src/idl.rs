@@ -16,7 +16,7 @@ pub fn generate(crate_path: &Path, generate_typescript: bool) -> CliResult {
     let parsed = parser::parse_program(crate_path);
 
     // Generate client code before build_idl consumes parsed
-    let client_code = codegen::rust::generate_client(&parsed);
+    let client_code = codegen::rust::generate_client(&parsed)?;
     let client_cargo_toml = codegen::rust::generate_cargo_toml(&parsed.crate_name, &parsed.version);
 
     // Build the IDL
@@ -31,8 +31,8 @@ pub fn generate(crate_path: &Path, generate_typescript: bool) -> CliResult {
     std::fs::write(&idl_path, &json).expect("Failed to write IDL file");
 
     if generate_typescript {
-        let ts_code = codegen::typescript::generate_ts_client(&idl);
-        let ts_kit_code = codegen::typescript::generate_ts_client_kit(&idl);
+        let ts_code = codegen::typescript::generate_ts_client(&idl)?;
+        let ts_kit_code = codegen::typescript::generate_ts_client_kit(&idl)?;
 
         // Write TypeScript clients to target/client/typescript/<name>/
         let ts_dir = PathBuf::from("target")

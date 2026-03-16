@@ -613,7 +613,7 @@ fn rust_codegen_events() {
         errors: vec![],
     };
 
-    let code = generate_client(&parsed);
+    let code = generate_client(&parsed).unwrap();
 
     // Event discriminator constants
     assert!(
@@ -709,7 +709,7 @@ fn rust_codegen_remaining_accounts() {
         errors: vec![],
     };
 
-    let code = generate_client(&parsed);
+    let code = generate_client(&parsed).unwrap();
 
     // Instruction with remaining should have the field and extend
     assert!(
@@ -760,7 +760,7 @@ fn ts_codegen_remaining_accounts() {
     };
 
     let idl = build_idl(parsed);
-    let code = generate_ts_client_kit(&idl);
+    let code = generate_ts_client_kit(&idl).unwrap();
 
     assert!(
         code.contains("remainingAccounts?"),

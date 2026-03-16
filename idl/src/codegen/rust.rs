@@ -1,6 +1,9 @@
-use crate::{
-    parser::{accounts::RawAccountField, helpers, ParsedProgram},
-    types::IdlType,
+use {
+    crate::{
+        parser::{accounts::RawAccountField, helpers, ParsedProgram},
+        types::IdlType,
+    },
+    std::fmt::{self, Write},
 };
 
 /// Generate Cargo.toml content for the standalone client crate.
@@ -19,7 +22,7 @@ solana-instruction = "3"
 }
 
 /// Generate a standalone Rust client lib.rs from parsed program data.
-pub fn generate_client(parsed: &ParsedProgram) -> String {
+pub fn generate_client(parsed: &ParsedProgram) -> Result<String, fmt::Error> {
     let mut out = String::new();
 
     // Check if any instruction uses dynamic types or remaining accounts (need Vec
@@ -43,10 +46,11 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
     out.push_str("use solana_instruction::{AccountMeta, Instruction};\n\n");
 
     // Program ID constant
-    out.push_str(&format!(
+    write!(
+        out,
         "pub const ID: Address = solana_address::address!(\"{}\");\n\n",
         parsed.program_id
-    ));
+    )?;
 
     for ix in &parsed.instructions {
         let accounts_struct = parsed
@@ -63,22 +67,23 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
             .collect();
 
         // --- Struct definition ---
-        out.push_str(&format!("pub struct {}Instruction {{\n", struct_name));
+        write!(out, "pub struct {}Instruction {{\n", struct_name)?;
 
         // Account fields (all Address)
         if let Some(accs) = accounts_struct {
             for field in &accs.fields {
-                out.push_str(&format!("    pub {}: Address,\n", field.name));
+                write!(out, "    pub {}: Address,\n", field.name)?;
             }
         }
 
         // Instruction arg fields
         for (i, (name, _)) in ix.args.iter().enumerate() {
-            out.push_str(&format!(
+            write!(
+                out,
                 "    pub {}: {},\n",
                 name,
                 rust_field_type(&arg_types[i])
-            ));
+            )?;
         }
 
         // Remaining accounts field
@@ -89,14 +94,16 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
         out.push_str("}\n\n");
 
         // --- From impl ---
-        out.push_str(&format!(
+        write!(
+            out,
             "impl From<{}Instruction> for Instruction {{\n",
             struct_name
-        ));
-        out.push_str(&format!(
+        )?;
+        write!(
+            out,
             "    fn from(ix: {}Instruction) -> Instruction {{\n",
             struct_name
-        ));
+        )?;
 
         // Account metas
         if ix.has_remaining {
@@ -106,7 +113,7 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
         }
         if let Some(accs) = accounts_struct {
             for field in &accs.fields {
-                out.push_str(&format!("            {},\n", account_meta_expr(field)));
+                write!(out, "            {},\n", account_meta_expr(field))?;
             }
         }
         out.push_str("        ];\n");
@@ -115,18 +122,12 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
         }
 
         // Instruction data
-        let disc_bytes: Vec<String> = ix.discriminator.iter().map(|b| b.to_string()).collect();
+        let disc_str = format_disc_list(&ix.discriminator)?;
 
         if ix.args.is_empty() {
-            out.push_str(&format!(
-                "        let data = vec![{}];\n",
-                disc_bytes.join(", ")
-            ));
+            write!(out, "        let data = vec![{}];\n", disc_str)?;
         } else {
-            out.push_str(&format!(
-                "        let mut data = vec![{}];\n",
-                disc_bytes.join(", ")
-            ));
+            write!(out, "        let mut data = vec![{}];\n", disc_str)?;
             for (i, (name, _)) in ix.args.iter().enumerate() {
                 out.push_str(&serialize_expr(name, &arg_types[i]));
             }
@@ -153,24 +154,25 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
         // Event discriminator constants
         for ev in &parsed.events {
             let const_name = pascal_to_screaming_snake(&ev.name);
-            let disc_bytes: Vec<String> = ev.discriminator.iter().map(|b| b.to_string()).collect();
-            out.push_str(&format!(
+            let disc_str = format_disc_list(&ev.discriminator)?;
+            write!(
+                out,
                 "pub const {}_EVENT_DISCRIMINATOR: &[u8] = &[{}];\n",
-                const_name,
-                disc_bytes.join(", ")
-            ));
+                const_name, disc_str
+            )?;
         }
         out.push('\n');
 
         // Event struct definitions
         for type_def in &event_types {
-            out.push_str(&format!("pub struct {} {{\n", type_def.name));
+            write!(out, "pub struct {} {{\n", type_def.name)?;
             for field in &type_def.ty.fields {
-                out.push_str(&format!(
+                write!(
+                    out,
                     "    pub {}: {},\n",
                     field.name,
                     rust_field_type(&field.ty)
-                ));
+                )?;
             }
             out.push_str("}\n\n");
         }
@@ -179,9 +181,9 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
         out.push_str("pub enum ProgramEvent {\n");
         for type_def in &event_types {
             if type_def.ty.fields.is_empty() {
-                out.push_str(&format!("    {},\n", type_def.name));
+                write!(out, "    {},\n", type_def.name)?;
             } else {
-                out.push_str(&format!("    {}({}),\n", type_def.name, type_def.name));
+                write!(out, "    {}({}),\n", type_def.name, type_def.name)?;
             }
         }
         out.push_str("}\n\n");
@@ -191,32 +193,36 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
         for (i, ev) in parsed.events.iter().enumerate() {
             let const_name = pascal_to_screaming_snake(&ev.name);
             let type_def = &event_types[i];
-            out.push_str(&format!(
+            write!(
+                out,
                 "    if data.starts_with({}_EVENT_DISCRIMINATOR) {{\n",
                 const_name
-            ));
+            )?;
             if type_def.ty.fields.is_empty() {
-                out.push_str(&format!(
+                write!(
+                    out,
                     "        return Some(ProgramEvent::{});\n",
                     type_def.name
-                ));
+                )?;
             } else {
-                out.push_str(&format!(
+                write!(
+                    out,
                     "        let data = &data[{}_EVENT_DISCRIMINATOR.len()..];\n",
                     const_name
-                ));
+                )?;
                 out.push_str("        let mut offset = 0usize;\n");
                 for field in &type_def.ty.fields {
                     out.push_str(&deserialize_field_expr(&field.name, &field.ty));
                 }
                 let field_names: Vec<&str> =
                     type_def.ty.fields.iter().map(|f| f.name.as_str()).collect();
-                out.push_str(&format!(
+                write!(
+                    out,
                     "        return Some(ProgramEvent::{}({} {{ {} }}));\n",
                     type_def.name,
                     type_def.name,
                     field_names.join(", ")
-                ));
+                )?;
             }
             out.push_str("    }\n");
         }
@@ -224,7 +230,7 @@ pub fn generate_client(parsed: &ParsedProgram) -> String {
         out.push_str("}\n\n");
     }
 
-    out
+    Ok(out)
 }
 
 fn account_meta_expr(field: &RawAccountField) -> String {
@@ -352,8 +358,20 @@ fn primitive_size(p: &str) -> usize {
     }
 }
 
+/// Format discriminator bytes as a comma-separated list (no brackets).
+fn format_disc_list(disc: &[u8]) -> Result<String, fmt::Error> {
+    let mut s = String::with_capacity(disc.len() * 4);
+    for (i, b) in disc.iter().enumerate() {
+        if i > 0 {
+            s.push_str(", ");
+        }
+        write!(s, "{}", b)?;
+    }
+    Ok(s)
+}
+
 fn pascal_to_screaming_snake(s: &str) -> String {
-    let mut result = String::new();
+    let mut result = String::with_capacity(s.len() + 4);
     for (i, c) in s.chars().enumerate() {
         if c.is_uppercase() && i > 0 {
             result.push('_');
