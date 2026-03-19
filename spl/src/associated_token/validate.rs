@@ -1,6 +1,6 @@
 use {
     super::address::get_associated_token_address_with_program,
-    crate::helpers::init::validate_token_account, quasar_core::prelude::*,
+    crate::helpers::init::validate_token_account, quasar_lang::prelude::*,
 };
 
 /// Validate that an account is the correct ATA for a wallet and mint.
@@ -18,7 +18,7 @@ pub fn validate_ata(
     token_program: &Address,
 ) -> Result<(), ProgramError> {
     let (expected, _) = get_associated_token_address_with_program(wallet, mint, token_program);
-    if !quasar_core::keys_eq(view.address(), &expected) {
+    if !quasar_lang::keys_eq(view.address(), &expected) {
         return Err(ProgramError::InvalidSeeds);
     }
     validate_token_account(view, mint, wallet)

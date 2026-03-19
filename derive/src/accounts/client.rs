@@ -22,7 +22,7 @@ pub(super) fn generate_client_macro(
         .iter()
         .map(|f| {
             let field_name = f.ident.as_ref().unwrap().to_string();
-            format!("pub {}: quasar_core::prelude::Address,", field_name)
+            format!("pub {}: quasar_lang::prelude::Address,", field_name)
         })
         .collect::<Vec<_>>()
         .join("\n                ");
@@ -37,12 +37,12 @@ pub(super) fn generate_client_macro(
             let signer = is_signer_type(&f.ty);
             if writable {
                 format!(
-                    "quasar_core::client::AccountMeta::new(ix.{}, {}),",
+                    "quasar_lang::client::AccountMeta::new(ix.{}, {}),",
                     field_name, signer
                 )
             } else {
                 format!(
-                    "quasar_core::client::AccountMeta::new_readonly(ix.{}, {}),",
+                    "quasar_lang::client::AccountMeta::new_readonly(ix.{}, {}),",
                     field_name, signer
                 )
             }
@@ -62,16 +62,16 @@ pub(super) fn generate_client_macro(
                     $(pub $arg_name: $arg_ty,)*
                 }}
 
-                impl From<$struct_name> for quasar_core::client::Instruction {{
-                    fn from(ix: $struct_name) -> quasar_core::client::Instruction {{
+                impl From<$struct_name> for quasar_lang::client::Instruction {{
+                    fn from(ix: $struct_name) -> quasar_lang::client::Instruction {{
                         let accounts = ::alloc::vec![
                             {account_metas}
                         ];
-                        let data = quasar_core::client::build_instruction_data(
+                        let data = quasar_lang::client::build_instruction_data(
                             &[$($disc),*],
-                            |_data| {{ $(quasar_core::client::WriteBytes::write_bytes(&ix.$arg_name, _data);)* }}
+                            |_data| {{ $(quasar_lang::client::WriteBytes::write_bytes(&ix.$arg_name, _data);)* }}
                         );
-                        quasar_core::client::Instruction {{
+                        quasar_lang::client::Instruction {{
                             program_id: $crate::ID,
                             accounts,
                             data,
@@ -83,20 +83,20 @@ pub(super) fn generate_client_macro(
                 pub struct $struct_name {{
                     {account_fields}
                     $(pub $arg_name: $arg_ty,)*
-                    pub remaining_accounts: ::alloc::vec::Vec<quasar_core::client::AccountMeta>,
+                    pub remaining_accounts: ::alloc::vec::Vec<quasar_lang::client::AccountMeta>,
                 }}
 
-                impl From<$struct_name> for quasar_core::client::Instruction {{
-                    fn from(ix: $struct_name) -> quasar_core::client::Instruction {{
+                impl From<$struct_name> for quasar_lang::client::Instruction {{
+                    fn from(ix: $struct_name) -> quasar_lang::client::Instruction {{
                         let mut accounts = ::alloc::vec![
                             {account_metas}
                         ];
                         accounts.extend(ix.remaining_accounts);
-                        let data = quasar_core::client::build_instruction_data(
+                        let data = quasar_lang::client::build_instruction_data(
                             &[$($disc),*],
-                            |_data| {{ $(quasar_core::client::WriteBytes::write_bytes(&ix.$arg_name, _data);)* }}
+                            |_data| {{ $(quasar_lang::client::WriteBytes::write_bytes(&ix.$arg_name, _data);)* }}
                         );
-                        quasar_core::client::Instruction {{
+                        quasar_lang::client::Instruction {{
                             program_id: $crate::ID,
                             accounts,
                             data,

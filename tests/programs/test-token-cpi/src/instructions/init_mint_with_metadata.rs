@@ -1,5 +1,5 @@
 use {
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
     quasar_spl::{metadata::MetadataProgram, Mint, Token},
 };
 

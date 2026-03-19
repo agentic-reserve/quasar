@@ -1,4 +1,4 @@
-use {crate::state::ErrorTestAccount, quasar_core::prelude::*};
+use {crate::state::ErrorTestAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct AccountCheckIx<'info> {

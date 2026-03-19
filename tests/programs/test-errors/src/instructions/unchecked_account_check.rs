@@ -1,4 +1,4 @@
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UncheckedAccountCheck<'info> {

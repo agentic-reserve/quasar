@@ -1,4 +1,4 @@
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 /// Tests: "Account 'account' (index 0): must be writable signer with no
 /// duplicates"

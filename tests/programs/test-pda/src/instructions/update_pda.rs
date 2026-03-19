@@ -1,4 +1,4 @@
-use {crate::state::UserAccount, quasar_core::prelude::*};
+use {crate::state::UserAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct UpdatePda<'info> {

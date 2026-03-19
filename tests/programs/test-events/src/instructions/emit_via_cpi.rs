@@ -1,6 +1,6 @@
 use {
     crate::{events::SimpleEvent, EventAuthority, QuasarTestEvents},
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
 };
 
 #[derive(Accounts)]

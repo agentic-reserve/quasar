@@ -1,6 +1,6 @@
 use {
     crate::state::MultisigConfig,
-    quasar_core::{prelude::*, remaining::RemainingAccounts},
+    quasar_lang::{prelude::*, remaining::RemainingAccounts},
 };
 
 #[derive(Accounts)]

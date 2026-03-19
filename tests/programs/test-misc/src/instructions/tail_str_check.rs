@@ -1,4 +1,4 @@
-use {crate::state::TailStrAccount, quasar_core::prelude::*};
+use {crate::state::TailStrAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct TailStrCheck<'info> {

@@ -1,4 +1,4 @@
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 /// Tests: "Account 'program' (index 0): must be executable program with no
 /// duplicates"

@@ -156,7 +156,7 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
                                 } else if let Some((elem, _, _)) = classify_dynamic_vec(&pt.ty) {
                                     syn::parse_quote!(alloc::vec::Vec<#elem>)
                                 } else if classify_tail(&pt.ty).is_some() {
-                                    syn::parse_quote!(quasar_core::client::TailBytes)
+                                    syn::parse_quote!(quasar_lang::client::TailBytes)
                                 } else {
                                     (*pt.ty).clone()
                                 };
@@ -214,7 +214,7 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 // for address comparison are technically misaligned (Address is align 1), but SBF
                 // handles unaligned access natively — this 4×u64 compare saves ~20 CU vs memcmp.
                 unsafe {
-                    let raw = ptr.add(core::mem::size_of::<u64>()) as *const quasar_core::__internal::RuntimeAccount;
+                    let raw = ptr.add(core::mem::size_of::<u64>()) as *const quasar_lang::__internal::RuntimeAccount;
 
                     if (*raw).is_signer == 0 {
                         return Err(ProgramError::MissingRequiredSignature);
@@ -235,7 +235,7 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
                     return Err(ProgramError::InvalidInstructionData);
                 }
 
-                quasar_core::log::log_data(&[&instruction_data[1..]]);
+                quasar_lang::log::log_data(&[&instruction_data[1..]]);
                 Ok(())
             }
         });
@@ -299,9 +299,9 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // Generate the named program type outside the module
     let program_type = quote! {
-        quasar_core::define_account!(pub struct #program_type_name => [quasar_core::checks::Executable, quasar_core::checks::Address]);
+        quasar_lang::define_account!(pub struct #program_type_name => [quasar_lang::checks::Executable, quasar_lang::checks::Address]);
 
-        impl quasar_core::traits::Id for #program_type_name {
+        impl quasar_lang::traits::Id for #program_type_name {
             const ID: Address = crate::ID;
         }
 
@@ -318,7 +318,7 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         impl EventAuthority {
-            const __PDA: (Address, u8) = quasar_core::pda::find_program_address_const(
+            const __PDA: (Address, u8) = quasar_lang::pda::find_program_address_const(
                 &[b"__event_authority"],
                 &crate::ID,
             );
@@ -345,7 +345,7 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
         impl #program_type_name {
             #[inline(always)]
-            pub fn emit_event<E: quasar_core::traits::Event>(
+            pub fn emit_event<E: quasar_lang::traits::Event>(
                 &self,
                 event: &E,
                 event_authority: &EventAuthority,
@@ -353,7 +353,7 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 let program = self.to_account_view();
                 let ea = event_authority.to_account_view();
                 event.emit(|data| {
-                    quasar_core::event::emit_event_cpi(program, ea, data, EventAuthority::BUMP)
+                    quasar_lang::event::emit_event_cpi(program, ea, data, EventAuthority::BUMP)
                 })
             }
         }
@@ -379,17 +379,17 @@ pub(crate) fn program(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #[cfg(any(target_os = "solana", target_arch = "bpf"))]
         #[panic_handler]
         fn panic(_info: &core::panic::PanicInfo<'_>) -> ! {
-            quasar_core::prelude::log("PANIC");
+            quasar_lang::prelude::log("PANIC");
             loop {}
         }
 
         #[allow(unexpected_cfgs)]
         #[cfg(feature = "alloc")]
-        quasar_core::heap_alloc!();
+        quasar_lang::heap_alloc!();
 
         #[allow(unexpected_cfgs)]
         #[cfg(not(feature = "alloc"))]
-        quasar_core::no_alloc!();
+        quasar_lang::no_alloc!();
     }
     .into()
 }

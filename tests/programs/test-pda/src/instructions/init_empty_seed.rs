@@ -1,4 +1,4 @@
-use {crate::state::EmptySeedAccount, quasar_core::prelude::*};
+use {crate::state::EmptySeedAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct InitEmptySeed<'info> {

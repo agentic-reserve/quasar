@@ -1,4 +1,4 @@
-use {crate::state::ErrorTestAccount, quasar_core::prelude::*};
+use {crate::state::ErrorTestAccount, quasar_lang::prelude::*};
 
 pub const EXPECTED_ADDR_DEFAULT: Address = Address::new_from_array([88u8; 32]);
 

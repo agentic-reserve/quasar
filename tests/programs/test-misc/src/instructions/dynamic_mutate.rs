@@ -1,4 +1,4 @@
-use {crate::state::DynamicAccount, quasar_core::prelude::*};
+use {crate::state::DynamicAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct DynamicMutate<'info> {

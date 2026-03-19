@@ -65,7 +65,7 @@
 )]
 
 use {
-    quasar_core::{
+    quasar_lang::{
         __internal::{AccountView, RuntimeAccount, MAX_PERMITTED_DATA_INCREASE, NOT_BORROWED},
         accounts::{
             account::{resize, set_lamports},
@@ -1219,7 +1219,7 @@ fn uninit_cpi_create_account_data() {
     let to = unsafe { to_buf.view() };
     let owner = Address::new_from_array([0xAA; 32]);
 
-    let call = quasar_core::cpi::system::create_account(&from, &to, 500_000u64, 100, &owner);
+    let call = quasar_lang::cpi::system::create_account(&from, &to, 500_000u64, 100, &owner);
     let data = call.instruction_data();
     assert_eq!(data.len(), 52);
     assert_eq!(u32::from_le_bytes(data[0..4].try_into().unwrap()), 0);
@@ -1238,7 +1238,7 @@ fn uninit_cpi_transfer_data() {
     let from = unsafe { from_buf.view() };
     let to = unsafe { to_buf.view() };
 
-    let call = quasar_core::cpi::system::transfer(&from, &to, 42u64);
+    let call = quasar_lang::cpi::system::transfer(&from, &to, 42u64);
     let data = call.instruction_data();
     assert_eq!(data.len(), 12);
     assert_eq!(u32::from_le_bytes(data[0..4].try_into().unwrap()), 2);
@@ -1252,7 +1252,7 @@ fn uninit_cpi_assign_data() {
     let view = unsafe { buf.view() };
     let owner = Address::new_from_array([0xBB; 32]);
 
-    let call = quasar_core::cpi::system::assign(&view, &owner);
+    let call = quasar_lang::cpi::system::assign(&view, &owner);
     let data = call.instruction_data();
     assert_eq!(data.len(), 36);
     assert_eq!(u32::from_le_bytes(data[0..4].try_into().unwrap()), 1);
@@ -1269,7 +1269,7 @@ fn uninit_cpi_transfer_boundary_values() {
         let from = unsafe { from_buf.view() };
         let to = unsafe { to_buf.view() };
 
-        let call = quasar_core::cpi::system::transfer(&from, &to, lamports);
+        let call = quasar_lang::cpi::system::transfer(&from, &to, lamports);
         let data = call.instruction_data();
         assert_eq!(
             u64::from_le_bytes(data[4..12].try_into().unwrap()),
@@ -1455,7 +1455,7 @@ fn uninit_parse_simulation_many_dups() {
 
 #[test]
 fn uninit_sysvar_maybeuninit_write_bytes_assume_init() {
-    use quasar_core::sysvars::rent::Rent;
+    use quasar_lang::sysvars::rent::Rent;
 
     let rent: Rent = {
         let mut var = MaybeUninit::<Rent>::uninit();
@@ -1468,7 +1468,7 @@ fn uninit_sysvar_maybeuninit_write_bytes_assume_init() {
 
 #[test]
 fn uninit_sysvar_rent_2x_threshold() {
-    use quasar_core::sysvars::rent::{Rent, ACCOUNT_STORAGE_OVERHEAD};
+    use quasar_lang::sysvars::rent::{Rent, ACCOUNT_STORAGE_OVERHEAD};
 
     let rent: Rent = {
         let mut var = MaybeUninit::<Rent>::uninit();
@@ -2465,7 +2465,7 @@ fn adversarial_cpi_create_account_boundary_space() {
         let to = unsafe { to_buf.view() };
         let owner = Address::new_from_array([0xAA; 32]);
 
-        let call = quasar_core::cpi::system::create_account(&from, &to, 1u64, space, &owner);
+        let call = quasar_lang::cpi::system::create_account(&from, &to, 1u64, space, &owner);
         let data = call.instruction_data();
         assert_eq!(u64::from_le_bytes(data[12..20].try_into().unwrap()), space);
     }

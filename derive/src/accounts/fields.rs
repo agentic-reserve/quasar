@@ -251,7 +251,7 @@ fn wrap_init_block(
         let validate = validate_existing.unwrap_or_default();
         quote! {
             {
-                if quasar_core::is_system_program(#field_name.owner()) {
+                if quasar_lang::is_system_program(#field_name.owner()) {
                     #cpi_body
                 } else {
                     #validate
@@ -261,7 +261,7 @@ fn wrap_init_block(
     } else {
         quote! {
             {
-                if !quasar_core::is_system_program(#field_name.owner()) {
+                if !quasar_lang::is_system_program(#field_name.owner()) {
                     return Err(ProgramError::AccountAlreadyInitialized);
                 }
                 #cpi_body
@@ -599,30 +599,30 @@ pub(super) fn process_fields(
             let field_name_str = field_name.to_string();
             push_check(quote! {
                 #[cfg(feature = "debug")]
-                if let Err(e) = <#inner_ty as quasar_core::traits::CheckOwner>::check_owner(#field_name.to_account_view()) {
-                    quasar_core::prelude::log(&::alloc::format!("Owner check failed for account '{}'", #field_name_str));
+                if let Err(e) = <#inner_ty as quasar_lang::traits::CheckOwner>::check_owner(#field_name.to_account_view()) {
+                    quasar_lang::prelude::log(&::alloc::format!("Owner check failed for account '{}'", #field_name_str));
                     return Err(e);
                 }
                 #[cfg(not(feature = "debug"))]
-                <#inner_ty as quasar_core::traits::CheckOwner>::check_owner(#field_name.to_account_view())?;
+                <#inner_ty as quasar_lang::traits::CheckOwner>::check_owner(#field_name.to_account_view())?;
 
                 #[cfg(feature = "debug")]
-                if let Err(e) = <#inner_ty as quasar_core::traits::AccountCheck>::check(#field_name.to_account_view()) {
-                    quasar_core::prelude::log(&::alloc::format!("Discriminator check failed for account '{}': data may be uninitialized or corrupted", #field_name_str));
+                if let Err(e) = <#inner_ty as quasar_lang::traits::AccountCheck>::check(#field_name.to_account_view()) {
+                    quasar_lang::prelude::log(&::alloc::format!("Discriminator check failed for account '{}': data may be uninitialized or corrupted", #field_name_str));
                     return Err(e);
                 }
                 #[cfg(not(feature = "debug"))]
-                <#inner_ty as quasar_core::traits::AccountCheck>::check(#field_name.to_account_view())?;
+                <#inner_ty as quasar_lang::traits::AccountCheck>::check(#field_name.to_account_view())?;
             });
         } else if let Some(inner_ty) = extract_generic_inner_type(underlying_ty, "Sysvar") {
             let field_name_str = field_name.to_string();
             push_check(quote! {
-                if #field_name.to_account_view().address() != &<#inner_ty as quasar_core::sysvars::Sysvar>::ID {
+                if #field_name.to_account_view().address() != &<#inner_ty as quasar_lang::sysvars::Sysvar>::ID {
                     #[cfg(feature = "debug")]
-                    quasar_core::prelude::log(&::alloc::format!(
+                    quasar_lang::prelude::log(&::alloc::format!(
                         "Incorrect sysvar address for account '{}': expected {}, got {}",
                         #field_name_str,
-                        <#inner_ty as quasar_core::sysvars::Sysvar>::ID,
+                        <#inner_ty as quasar_lang::sysvars::Sysvar>::ID,
                         #field_name.to_account_view().address()
                     ));
                     return Err(ProgramError::IncorrectProgramId);
@@ -631,12 +631,12 @@ pub(super) fn process_fields(
         } else if let Some(inner_ty) = extract_generic_inner_type(underlying_ty, "Program") {
             let field_name_str = field_name.to_string();
             push_check(quote! {
-                if *#field_name.to_account_view().address() != <#inner_ty as quasar_core::traits::Id>::ID {
+                if *#field_name.to_account_view().address() != <#inner_ty as quasar_lang::traits::Id>::ID {
                     #[cfg(feature = "debug")]
-                    quasar_core::prelude::log(&::alloc::format!(
+                    quasar_lang::prelude::log(&::alloc::format!(
                         "Incorrect program ID for account '{}': expected {}, got {}",
                         #field_name_str,
-                        <#inner_ty as quasar_core::traits::Id>::ID,
+                        <#inner_ty as quasar_lang::traits::Id>::ID,
                         #field_name.to_account_view().address()
                     ));
                     return Err(ProgramError::IncorrectProgramId);
@@ -645,9 +645,9 @@ pub(super) fn process_fields(
         } else if let Some(inner_ty) = extract_generic_inner_type(underlying_ty, "Interface") {
             let field_name_str = field_name.to_string();
             push_check(quote! {
-                if !<#inner_ty as quasar_core::traits::ProgramInterface>::matches(#field_name.to_account_view().address()) {
+                if !<#inner_ty as quasar_lang::traits::ProgramInterface>::matches(#field_name.to_account_view().address()) {
                     #[cfg(feature = "debug")]
-                    quasar_core::prelude::log(&::alloc::format!(
+                    quasar_lang::prelude::log(&::alloc::format!(
                         "Program interface mismatch for account '{}': address {} does not match any allowed programs",
                         #field_name_str,
                         #field_name.to_account_view().address()
@@ -660,19 +660,19 @@ pub(super) fn process_fields(
             let base_type = strip_generics(underlying_ty);
             push_check(quote! {
                 #[cfg(feature = "debug")]
-                if let Err(e) = <#base_type as quasar_core::checks::Owner>::check(#field_name.to_account_view()) {
-                    quasar_core::prelude::log(&::alloc::format!("Owner check failed for account '{}': not owned by system program", #field_name_str));
+                if let Err(e) = <#base_type as quasar_lang::checks::Owner>::check(#field_name.to_account_view()) {
+                    quasar_lang::prelude::log(&::alloc::format!("Owner check failed for account '{}': not owned by system program", #field_name_str));
                     return Err(e);
                 }
                 #[cfg(not(feature = "debug"))]
-                <#base_type as quasar_core::checks::Owner>::check(#field_name.to_account_view())?;
+                <#base_type as quasar_lang::checks::Owner>::check(#field_name.to_account_view())?;
             });
         }
 
         // Field construction — flags already validated via header check
         let construct = |expr: proc_macro2::TokenStream| {
             if is_optional {
-                quote! { #field_name: if quasar_core::keys_eq(#field_name.address(), __program_id) { None } else { Some(#expr) } }
+                quote! { #field_name: if quasar_lang::keys_eq(#field_name.address(), __program_id) { None } else { Some(#expr) } }
             } else {
                 quote! { #field_name: #expr }
             }
@@ -831,7 +831,7 @@ pub(super) fn process_fields(
                             let __bump_val: u8 = #bump_expr;
                             let __bump_ref: &[u8] = &[__bump_val];
                             let __pda_seeds = [#(#seed_idents,)* __bump_ref];
-                            quasar_core::pda::verify_program_address(&__pda_seeds, __program_id, &#addr_access)?;
+                            quasar_lang::pda::verify_program_address(&__pda_seeds, __program_id, &#addr_access)?;
                             #bump_var = __bump_val;
                         }
                     };
@@ -847,7 +847,7 @@ pub(super) fn process_fields(
                         {
                             #(#seed_len_checks)*
                             let __pda_seeds = [#(#seed_idents),*];
-                            let (__expected, __bump) = quasar_core::pda::based_try_find_program_address(&__pda_seeds, __program_id)?;
+                            let (__expected, __bump) = quasar_lang::pda::based_try_find_program_address(&__pda_seeds, __program_id)?;
                             if #addr_access != __expected {
                                 return Err(QuasarError::InvalidPda.into());
                             }
@@ -890,21 +890,21 @@ pub(super) fn process_fields(
                             bump_struct_inits.push(quote! { #addr_field: #capture_var });
 
                             seed_elements.push(
-                                quote! { quasar_core::cpi::Seed::from(self.#addr_field.as_ref()) },
+                                quote! { quasar_lang::cpi::Seed::from(self.#addr_field.as_ref()) },
                             );
                             continue;
                         }
                     }
                 }
-                seed_elements.push(quote! { quasar_core::cpi::Seed::from((#expr) as &[u8]) });
+                seed_elements.push(quote! { quasar_lang::cpi::Seed::from((#expr) as &[u8]) });
             }
 
             seed_elements
-                .push(quote! { quasar_core::cpi::Seed::from(&self.#bump_arr_field as &[u8]) });
+                .push(quote! { quasar_lang::cpi::Seed::from(&self.#bump_arr_field as &[u8]) });
 
             seeds_methods.push(quote! {
                 #[inline(always)]
-                pub fn #method_name(&self) -> [quasar_core::cpi::Seed<'_>; #seed_count] {
+                pub fn #method_name(&self) -> [quasar_lang::cpi::Seed<'_>; #seed_count] {
                     [#(#seed_elements),*]
                 }
             });
@@ -928,7 +928,7 @@ pub(super) fn process_fields(
                     .collect();
                 quote! {
                     let __init_bump_ref: &[u8] = &[#bump_var];
-                    let __init_signer_seeds = [#(quasar_core::cpi::Seed::from(#seed_slices),)* quasar_core::cpi::Seed::from(__init_bump_ref)];
+                    let __init_signer_seeds = [#(quasar_lang::cpi::Seed::from(#seed_slices),)* quasar_lang::cpi::Seed::from(__init_bump_ref)];
                     __init_cpi.invoke_signed(&__init_signer_seeds)?;
                 }
             } else {
@@ -952,15 +952,15 @@ pub(super) fn process_fields(
 
                 let ata_cpi = |instruction_byte: u8| {
                     quote! {
-                        quasar_core::cpi::CpiCall::new(
+                        quasar_lang::cpi::CpiCall::new(
                             #ata_prog.address(),
                             [
-                                quasar_core::cpi::InstructionAccount::writable_signer(#pay_field.address()),
-                                quasar_core::cpi::InstructionAccount::writable(#field_name.address()),
-                                quasar_core::cpi::InstructionAccount::readonly(#auth_field.address()),
-                                quasar_core::cpi::InstructionAccount::readonly(#mint_field.address()),
-                                quasar_core::cpi::InstructionAccount::readonly(#sys_field.address()),
-                                quasar_core::cpi::InstructionAccount::readonly(#tok_field.address()),
+                                quasar_lang::cpi::InstructionAccount::writable_signer(#pay_field.address()),
+                                quasar_lang::cpi::InstructionAccount::writable(#field_name.address()),
+                                quasar_lang::cpi::InstructionAccount::readonly(#auth_field.address()),
+                                quasar_lang::cpi::InstructionAccount::readonly(#mint_field.address()),
+                                quasar_lang::cpi::InstructionAccount::readonly(#sys_field.address()),
+                                quasar_lang::cpi::InstructionAccount::readonly(#tok_field.address()),
                             ],
                             [#pay_field, #field_name, #auth_field, #mint_field, #sys_field, #tok_field],
                             [#instruction_byte],
@@ -989,7 +989,7 @@ pub(super) fn process_fields(
                     let __init_lamports = __shared_rent.try_minimum_balance(
                         quasar_spl::TokenAccountState::LEN
                     )?;
-                    let __init_cpi = quasar_core::cpi::system::create_account(
+                    let __init_cpi = quasar_lang::cpi::system::create_account(
                         #pay_field, #field_name, __init_lamports,
                         quasar_spl::TokenAccountState::LEN as u64,
                         #tok_field.address(),
@@ -1033,7 +1033,7 @@ pub(super) fn process_fields(
                     let __init_lamports = __shared_rent.try_minimum_balance(
                         quasar_spl::MintAccountState::LEN
                     )?;
-                    let __init_cpi = quasar_core::cpi::system::create_account(
+                    let __init_cpi = quasar_lang::cpi::system::create_account(
                         #pay_field, #field_name, __init_lamports,
                         quasar_spl::MintAccountState::LEN as u64,
                         #tok_field.address(),
@@ -1072,17 +1072,17 @@ pub(super) fn process_fields(
                 let space_expr = if let Some(space) = &attrs.space {
                     quote! { (#space) as u64 }
                 } else {
-                    quote! { <#inner_type as quasar_core::traits::Space>::SPACE as u64 }
+                    quote! { <#inner_type as quasar_lang::traits::Space>::SPACE as u64 }
                 };
 
                 let cpi_body = quote! {
                     let __init_space = #space_expr;
                     let __init_lamports = __shared_rent.try_minimum_balance(__init_space as usize)?;
-                    let __init_cpi = quasar_core::cpi::system::create_account(
+                    let __init_cpi = quasar_lang::cpi::system::create_account(
                         #pay_field, #field_name, __init_lamports, __init_space, &crate::ID,
                     );
                     #invoke_expr
-                    let __disc = <#inner_type as quasar_core::traits::Discriminator>::DISCRIMINATOR;
+                    let __disc = <#inner_type as quasar_lang::traits::Discriminator>::DISCRIMINATOR;
                     unsafe {
                         core::ptr::copy_nonoverlapping(
                             __disc.as_ptr(), #field_name.data_mut_ptr(), __disc.len(),
@@ -1129,7 +1129,7 @@ pub(super) fn process_fields(
             init_blocks.push(quote! {
                 {
                     let __realloc_space = (#realloc_expr) as usize;
-                    quasar_core::accounts::realloc_account(
+                    quasar_lang::accounts::realloc_account(
                         #field_name, __realloc_space, #realloc_pay, Some(&__shared_rent)
                     )?;
                 }
@@ -1166,9 +1166,9 @@ pub(super) fn process_fields(
                         quasar_spl::metadata::MetadataCpi::create_metadata_accounts_v3(
                             #meta_prog, #meta_field, #field_name, #mint_auth,
                             #pay, #update_auth, #sys, #rent,
-                            quasar_core::borsh::BorshString::new(#meta_name),
-                            quasar_core::borsh::BorshString::new(#meta_symbol),
-                            quasar_core::borsh::BorshString::new(#meta_uri),
+                            quasar_lang::borsh::BorshString::new(#meta_name),
+                            quasar_lang::borsh::BorshString::new(#meta_symbol),
+                            quasar_lang::borsh::BorshString::new(#meta_uri),
                             #seller_fee, #is_mutable, true,
                         ).invoke()?;
                     }

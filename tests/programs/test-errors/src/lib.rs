@@ -1,7 +1,7 @@
 #![no_std]
 #![allow(dead_code)]
 
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 mod instructions;
 use instructions::*;

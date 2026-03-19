@@ -4,13 +4,13 @@ use {
         instructions::TokenCpi,
         state::{MintAccountState, TokenAccountState},
     },
-    quasar_core::{prelude::*, utils::hint::unlikely},
+    quasar_lang::{prelude::*, utils::hint::unlikely},
 };
 
 #[inline(always)]
 fn is_token_program_owner(view: &AccountView) -> bool {
     let owner = view.owner();
-    quasar_core::keys_eq(owner, &SPL_TOKEN_ID) || quasar_core::keys_eq(owner, &TOKEN_2022_ID)
+    quasar_lang::keys_eq(owner, &SPL_TOKEN_ID) || quasar_lang::keys_eq(owner, &TOKEN_2022_ID)
 }
 
 /// Extension trait for token account initialization.
@@ -67,7 +67,7 @@ pub trait InitToken: AsAccountView + Sized {
         rent: Option<&Rent>,
     ) -> Result<(), ProgramError> {
         let view = self.to_account_view();
-        if quasar_core::is_system_program(view.owner()) {
+        if quasar_lang::is_system_program(view.owner()) {
             self.init(system_program, payer, token_program, mint, owner, rent)
         } else {
             if unlikely(!is_token_program_owner(view)) {
@@ -83,13 +83,13 @@ pub trait InitToken: AsAccountView + Sized {
             if unlikely(!state.is_initialized()) {
                 return Err(ProgramError::UninitializedAccount);
             }
-            if unlikely(!quasar_core::keys_eq(
+            if unlikely(!quasar_lang::keys_eq(
                 state.mint(),
                 mint.to_account_view().address(),
             )) {
                 return Err(ProgramError::InvalidAccountData);
             }
-            if unlikely(!quasar_core::keys_eq(state.owner(), owner)) {
+            if unlikely(!quasar_lang::keys_eq(state.owner(), owner)) {
                 return Err(ProgramError::InvalidAccountData);
             }
             Ok(())
@@ -155,7 +155,7 @@ pub trait InitMint: AsAccountView + Sized {
         rent: Option<&Rent>,
     ) -> Result<(), ProgramError> {
         let view = self.to_account_view();
-        if quasar_core::is_system_program(view.owner()) {
+        if quasar_lang::is_system_program(view.owner()) {
             self.init(
                 system_program,
                 payer,
@@ -181,7 +181,7 @@ pub trait InitMint: AsAccountView + Sized {
             }
             if unlikely(
                 !state.has_mint_authority()
-                    || !quasar_core::keys_eq(state.mint_authority_unchecked(), mint_authority),
+                    || !quasar_lang::keys_eq(state.mint_authority_unchecked(), mint_authority),
             ) {
                 return Err(ProgramError::InvalidAccountData);
             }
@@ -212,10 +212,10 @@ pub fn validate_token_account(
     if unlikely(!state.is_initialized()) {
         return Err(ProgramError::UninitializedAccount);
     }
-    if unlikely(!quasar_core::keys_eq(state.mint(), mint)) {
+    if unlikely(!quasar_lang::keys_eq(state.mint(), mint)) {
         return Err(ProgramError::InvalidAccountData);
     }
-    if unlikely(!quasar_core::keys_eq(state.owner(), authority)) {
+    if unlikely(!quasar_lang::keys_eq(state.owner(), authority)) {
         return Err(ProgramError::InvalidAccountData);
     }
     Ok(())
@@ -241,7 +241,7 @@ pub fn validate_mint(view: &AccountView, mint_authority: &Address) -> Result<(),
     }
     if unlikely(
         !state.has_mint_authority()
-            || !quasar_core::keys_eq(state.mint_authority_unchecked(), mint_authority),
+            || !quasar_lang::keys_eq(state.mint_authority_unchecked(), mint_authority),
     ) {
         return Err(ProgramError::InvalidAccountData);
     }

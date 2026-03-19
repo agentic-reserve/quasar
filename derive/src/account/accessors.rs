@@ -131,12 +131,12 @@ pub(super) fn generate_accessors(
                     let pb = prefix.bytes();
                     quote! {
                         #[inline(always)]
-                        pub fn #raw_name(&self) -> quasar_core::dynamic::RawEncoded<'_, #pb> {
+                        pub fn #raw_name(&self) -> quasar_lang::dynamic::RawEncoded<'_, #pb> {
                             let __data = unsafe { self.__view.borrow_unchecked() };
                             let __offset = #off_expr;
                             let __len = #read;
                             let __total = #pb + __len;
-                            quasar_core::dynamic::RawEncoded::new(&__data[__offset..__offset + __total])
+                            quasar_lang::dynamic::RawEncoded::new(&__data[__offset..__offset + __total])
                         }
                     }
                 }
@@ -145,22 +145,22 @@ pub(super) fn generate_accessors(
                     let pb = prefix.bytes();
                     quote! {
                         #[inline(always)]
-                        pub fn #raw_name(&self) -> quasar_core::dynamic::RawEncoded<'_, #pb> {
+                        pub fn #raw_name(&self) -> quasar_lang::dynamic::RawEncoded<'_, #pb> {
                             let __data = unsafe { self.__view.borrow_unchecked() };
                             let __offset = #off_expr;
                             let __count = #read;
                             let __total = #pb + __count * core::mem::size_of::<#elem>();
-                            quasar_core::dynamic::RawEncoded::new(&__data[__offset..__offset + __total])
+                            quasar_lang::dynamic::RawEncoded::new(&__data[__offset..__offset + __total])
                         }
                     }
                 }
                 DynFieldKind::Tail { .. } => {
                     quote! {
                         #[inline(always)]
-                        pub fn #raw_name(&self) -> quasar_core::dynamic::RawEncoded<'_, 0> {
+                        pub fn #raw_name(&self) -> quasar_lang::dynamic::RawEncoded<'_, 0> {
                             let __data = unsafe { self.__view.borrow_unchecked() };
                             let __offset = #off_expr;
-                            quasar_core::dynamic::RawEncoded::new(&__data[__offset..])
+                            quasar_lang::dynamic::RawEncoded::new(&__data[__offset..])
                         }
                     }
                 }

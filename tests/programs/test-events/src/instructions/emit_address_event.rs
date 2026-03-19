@@ -1,4 +1,4 @@
-use {crate::events::AddressEvent, quasar_core::prelude::*};
+use {crate::events::AddressEvent, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct EmitAddressEvent<'info> {

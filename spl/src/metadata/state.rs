@@ -1,5 +1,5 @@
 use {
-    crate::metadata::constants::METADATA_PROGRAM_ID, quasar_core::prelude::*,
+    crate::metadata::constants::METADATA_PROGRAM_ID, quasar_lang::prelude::*,
     solana_address::Address,
 };
 
@@ -129,7 +129,7 @@ impl AccountCheck for MetadataAccount {
 impl CheckOwner for MetadataAccount {
     #[inline(always)]
     fn check_owner(view: &AccountView) -> Result<(), ProgramError> {
-        if !quasar_core::keys_eq(view.owner(), &METADATA_PROGRAM_ID) {
+        if !quasar_lang::keys_eq(view.owner(), &METADATA_PROGRAM_ID) {
             return Err(ProgramError::IllegalOwner);
         }
         Ok(())
@@ -182,7 +182,7 @@ impl AccountCheck for MasterEditionAccount {
 impl CheckOwner for MasterEditionAccount {
     #[inline(always)]
     fn check_owner(view: &AccountView) -> Result<(), ProgramError> {
-        if !quasar_core::keys_eq(view.owner(), &METADATA_PROGRAM_ID) {
+        if !quasar_lang::keys_eq(view.owner(), &METADATA_PROGRAM_ID) {
             return Err(ProgramError::IllegalOwner);
         }
         Ok(())

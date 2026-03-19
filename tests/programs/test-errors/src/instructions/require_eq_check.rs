@@ -1,4 +1,4 @@
-use {crate::errors::TestError, quasar_core::prelude::*};
+use {crate::errors::TestError, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct RequireEqCheck<'info> {

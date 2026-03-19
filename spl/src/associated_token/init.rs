@@ -4,7 +4,7 @@ use {
         AssociatedTokenProgram,
     },
     crate::{helpers::init::validate_token_account, instructions::TokenCpi},
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
 };
 
 /// Extension trait for associated token account initialization.
@@ -64,7 +64,7 @@ pub trait InitAssociatedToken: AsAccountView + Sized {
         ata_program: &AssociatedTokenProgram,
     ) -> Result<(), ProgramError> {
         let view = self.to_account_view();
-        if quasar_core::is_system_program(view.owner()) {
+        if quasar_lang::is_system_program(view.owner()) {
             create_idempotent(
                 ata_program,
                 payer,

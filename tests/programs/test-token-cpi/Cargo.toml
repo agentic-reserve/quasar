@@ -11,11 +11,11 @@ workspace = true
 
 [features]
 default = ["alloc"]
-alloc = ["quasar-core/alloc"]
+alloc = ["quasar-lang/alloc"]
 debug = []
 
 [dependencies]
-quasar-core = { path = "../../../core" }
+quasar-lang = { path = "../../../lang" }
 quasar-spl = { path = "../../../spl", features = ["metadata"] }
 
 [dev-dependencies]

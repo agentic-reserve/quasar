@@ -4,7 +4,7 @@ use {
         instructions::TokenCpi,
         state::{MintAccountState, TokenAccountState},
     },
-    quasar_core::{prelude::*, traits::Id},
+    quasar_lang::{prelude::*, traits::Id},
 };
 
 /// Token account view — validates owner is SPL Token program.

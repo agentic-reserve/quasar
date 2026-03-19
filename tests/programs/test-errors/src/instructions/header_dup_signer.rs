@@ -1,4 +1,4 @@
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 /// Tests: "Account 'authority' (index 1): must be signer"
 #[derive(Accounts)]

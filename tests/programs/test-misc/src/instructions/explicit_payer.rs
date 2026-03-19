@@ -1,4 +1,4 @@
-use {crate::state::SimpleAccount, quasar_core::prelude::*};
+use {crate::state::SimpleAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct ExplicitPayer<'info> {

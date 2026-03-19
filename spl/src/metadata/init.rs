@@ -1,6 +1,6 @@
 use {
     super::instructions::MetadataCpi,
-    quasar_core::{borsh::CpiEncode, prelude::*},
+    quasar_lang::{borsh::CpiEncode, prelude::*},
 };
 
 /// Extension trait for metadata account initialization.

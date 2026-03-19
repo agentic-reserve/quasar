@@ -1,4 +1,4 @@
-use quasar_core::{
+use quasar_lang::{
     cpi::{CpiCall, InstructionAccount},
     prelude::*,
 };

@@ -1,4 +1,4 @@
-use quasar_core::{
+use quasar_lang::{
     borsh::CpiEncode,
     cpi::{BufCpiCall, InstructionAccount},
     prelude::*,

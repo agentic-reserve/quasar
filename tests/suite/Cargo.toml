@@ -11,7 +11,7 @@ debug = ["quasar-test-errors/debug"]
 workspace = true
 
 [dev-dependencies]
-quasar-core = { path = "../../core" }
+quasar-lang = { path = "../../lang" }
 quasar-test-misc = { path = "../programs/test-misc", features = ["client"] }
 quasar-test-pda = { path = "../programs/test-pda" }
 quasar-test-sysvar = { path = "../programs/test-sysvar" }

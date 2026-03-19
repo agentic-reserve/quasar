@@ -4,7 +4,7 @@ use {
         instructions::TokenCpi,
     },
     core::marker::PhantomData,
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
 };
 
 /// Generic interface account wrapper — accepts accounts owned by either
@@ -43,9 +43,9 @@ impl<T: AccountCheck> InterfaceAccount<T> {
     #[inline(always)]
     pub fn from_account_view(view: &AccountView) -> Result<&Self, ProgramError> {
         let owner = view.owner();
-        if quasar_core::utils::hint::unlikely(
-            !quasar_core::keys_eq(owner, &SPL_TOKEN_ID)
-                && !quasar_core::keys_eq(owner, &TOKEN_2022_ID),
+        if quasar_lang::utils::hint::unlikely(
+            !quasar_lang::keys_eq(owner, &SPL_TOKEN_ID)
+                && !quasar_lang::keys_eq(owner, &TOKEN_2022_ID),
         ) {
             return Err(ProgramError::IllegalOwner);
         }
@@ -66,13 +66,13 @@ impl<T: AccountCheck> InterfaceAccount<T> {
     /// from `T::check`.
     #[inline(always)]
     pub fn from_account_view_mut(view: &mut AccountView) -> Result<&mut Self, ProgramError> {
-        if quasar_core::utils::hint::unlikely(!view.is_writable()) {
+        if quasar_lang::utils::hint::unlikely(!view.is_writable()) {
             return Err(ProgramError::Immutable);
         }
         let owner = view.owner();
-        if quasar_core::utils::hint::unlikely(
-            !quasar_core::keys_eq(owner, &SPL_TOKEN_ID)
-                && !quasar_core::keys_eq(owner, &TOKEN_2022_ID),
+        if quasar_lang::utils::hint::unlikely(
+            !quasar_lang::keys_eq(owner, &SPL_TOKEN_ID)
+                && !quasar_lang::keys_eq(owner, &TOKEN_2022_ID),
         ) {
             return Err(ProgramError::IllegalOwner);
         }
@@ -142,9 +142,9 @@ pub struct TokenInterface;
 impl ProgramInterface for TokenInterface {
     #[inline(always)]
     fn matches(address: &Address) -> bool {
-        quasar_core::keys_eq(address, &SPL_TOKEN_ID)
-            || quasar_core::keys_eq(address, &TOKEN_2022_ID)
+        quasar_lang::keys_eq(address, &SPL_TOKEN_ID)
+            || quasar_lang::keys_eq(address, &TOKEN_2022_ID)
     }
 }
 
-impl TokenCpi for quasar_core::accounts::Interface<TokenInterface> {}
+impl TokenCpi for quasar_lang::accounts::Interface<TokenInterface> {}

@@ -16,7 +16,7 @@ mod update_primary_sale;
 mod utilize;
 mod verify_collection;
 
-use quasar_core::{
+use quasar_lang::{
     borsh::{BorshString, CpiEncode},
     cpi::{BufCpiCall, CpiCall},
     prelude::*,

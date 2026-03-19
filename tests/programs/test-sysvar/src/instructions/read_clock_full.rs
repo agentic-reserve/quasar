@@ -1,6 +1,6 @@
 use {
     crate::state::ClockFullSnapshot,
-    quasar_core::{
+    quasar_lang::{
         prelude::*,
         sysvars::{clock::Clock, Sysvar as _},
     },

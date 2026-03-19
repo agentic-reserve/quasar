@@ -80,7 +80,7 @@ macro_rules! impl_single_owner {
         impl AccountCheck for $ty {
             #[inline(always)]
             fn check(view: &AccountView) -> Result<(), ProgramError> {
-                if quasar_core::utils::hint::unlikely(view.data_len() < <$target>::LEN) {
+                if quasar_lang::utils::hint::unlikely(view.data_len() < <$target>::LEN) {
                     return Err(ProgramError::AccountDataTooSmall);
                 }
                 Ok(())
@@ -90,7 +90,7 @@ macro_rules! impl_single_owner {
         impl CheckOwner for $ty {
             #[inline(always)]
             fn check_owner(view: &AccountView) -> Result<(), ProgramError> {
-                if quasar_core::utils::hint::unlikely(!quasar_core::keys_eq(view.owner(), &$id)) {
+                if quasar_lang::utils::hint::unlikely(!quasar_lang::keys_eq(view.owner(), &$id)) {
                     return Err(ProgramError::IllegalOwner);
                 }
                 Ok(())

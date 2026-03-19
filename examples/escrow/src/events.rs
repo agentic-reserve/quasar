@@ -1,4 +1,4 @@
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 #[event(discriminator = 0)]
 pub struct MakeEvent {

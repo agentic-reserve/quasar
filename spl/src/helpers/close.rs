@@ -6,7 +6,7 @@ use {
         token::{Mint, Token},
         token_2022::{Mint2022, Token2022},
     },
-    quasar_core::{cpi::CpiCall, prelude::*},
+    quasar_lang::{cpi::CpiCall, prelude::*},
 };
 
 /// Extension trait providing `.close()` on `Account<T>` for token/mint account

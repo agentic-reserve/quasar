@@ -1,4 +1,4 @@
-use {crate::state::ComplexAccount, quasar_core::prelude::*};
+use {crate::state::ComplexAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct InitMultiSeeds<'info> {

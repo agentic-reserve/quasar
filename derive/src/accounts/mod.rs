@@ -121,7 +121,7 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
             parse_steps.push(quote! {
                 {
                     let mut __inner_buf = core::mem::MaybeUninit::<
-                        [quasar_core::__internal::AccountView; <#inner_ty as AccountCount>::COUNT]
+                        [quasar_lang::__internal::AccountView; <#inner_ty as AccountCount>::COUNT]
                     >::uninit();
                     input = <#inner_ty>::parse_accounts(input, &mut __inner_buf)?;
                     let __inner = unsafe { __inner_buf.assume_init() };
@@ -164,13 +164,13 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
 
                 let dup_check = |cond: proc_macro2::TokenStream, msg: &str| {
                     quote! {
-                        if quasar_core::utils::hint::unlikely(#cond) {
+                        if quasar_lang::utils::hint::unlikely(#cond) {
                             #[cfg(feature = "debug")]
-                            quasar_core::__internal::log_str(concat!(
+                            quasar_lang::__internal::log_str(concat!(
                                 "Account '", stringify!(#field_name),
                                 "' (index ", #account_index, "): ", #msg
                             ));
-                            return Err(ProgramError::from(quasar_core::decode_header_error(actual_header, #expected_header)));
+                            return Err(ProgramError::from(quasar_lang::decode_header_error(actual_header, #expected_header)));
                         }
                     }
                 };
@@ -208,14 +208,14 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
 
                 parse_steps.push(quote! {
                     {
-                        let raw = input as *mut quasar_core::__internal::RuntimeAccount;
+                        let raw = input as *mut quasar_lang::__internal::RuntimeAccount;
                         let actual_header = unsafe { *(raw as *const u32) };
 
-                        if (actual_header & 0xFF) == quasar_core::__internal::NOT_BORROWED as u32 {
+                        if (actual_header & 0xFF) == quasar_lang::__internal::NOT_BORROWED as u32 {
                             #flag_check
                             #exec_check
                             unsafe {
-                                core::ptr::write(base.add(#cur_offset), quasar_core::__internal::AccountView::new_unchecked(raw));
+                                core::ptr::write(base.add(#cur_offset), quasar_lang::__internal::AccountView::new_unchecked(raw));
                                 input = input.add(__ACCOUNT_HEADER.wrapping_add((*raw).data_len as usize));
                                 input = input.add((input as usize).wrapping_neg() & 7);
                             }
@@ -241,12 +241,12 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
                 } else if nodup_const == "NODUP_SIGNER" {
                     // u16: borrow_state + is_signer only, permits writable/executable
                     (
-                        quote! { (header as u16) != (quasar_core::__internal::#nodup_const_ident as u16) },
+                        quote! { (header as u16) != (quasar_lang::__internal::#nodup_const_ident as u16) },
                         "must be signer, no duplicates",
                     )
                 } else {
                     (
-                        quote! { header != quasar_core::__internal::#nodup_const_ident },
+                        quote! { header != quasar_lang::__internal::#nodup_const_ident },
                         match nodup_const {
                             "NODUP" => "no duplicates allowed",
                             "NODUP_MUT" => "must be writable, no duplicates",
@@ -259,19 +259,19 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
 
                 parse_steps.push(quote! {
                     unsafe {
-                        let raw = input as *mut quasar_core::__internal::RuntimeAccount;
+                        let raw = input as *mut quasar_lang::__internal::RuntimeAccount;
                         let header = *(raw as *const u32);
 
-                        if quasar_core::utils::hint::unlikely(#check_cond) {
+                        if quasar_lang::utils::hint::unlikely(#check_cond) {
                             #[cfg(feature = "debug")]
-                            quasar_core::__internal::log_str(concat!(
+                            quasar_lang::__internal::log_str(concat!(
                                 "Account '", stringify!(#field_name),
                                 "' (index ", #account_index, "): ", #debug_msg
                             ));
-                            return Err(ProgramError::from(quasar_core::decode_header_error(header, #expected_header)));
+                            return Err(ProgramError::from(quasar_lang::decode_header_error(header, #expected_header)));
                         }
 
-                        core::ptr::write(base.add(#cur_offset), quasar_core::__internal::AccountView::new_unchecked(raw));
+                        core::ptr::write(base.add(#cur_offset), quasar_lang::__internal::AccountView::new_unchecked(raw));
                         input = input.add(__ACCOUNT_HEADER.wrapping_add((*raw).data_len as usize));
                         input = input.add((input as usize).wrapping_neg() & 7);
                     }
@@ -374,7 +374,7 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
     let init_blocks = &pf.init_blocks;
 
     let rent_fetch = if pf.needs_rent {
-        quote! { let __shared_rent = <quasar_core::sysvars::rent::Rent as quasar_core::sysvars::Sysvar>::get()?; }
+        quote! { let __shared_rent = <quasar_lang::sysvars::rent::Rent as quasar_lang::sysvars::Sysvar>::get()?; }
     } else {
         quote! {}
     };
@@ -560,14 +560,14 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
             #[inline(always)]
             pub unsafe fn parse_accounts(
                 mut input: *mut u8,
-                buf: &mut core::mem::MaybeUninit<[quasar_core::__internal::AccountView; #count_expr]>,
+                buf: &mut core::mem::MaybeUninit<[quasar_lang::__internal::AccountView; #count_expr]>,
             ) -> Result<*mut u8, ProgramError> {
                 const __ACCOUNT_HEADER: usize =
-                    core::mem::size_of::<quasar_core::__internal::RuntimeAccount>()
-                    + quasar_core::__internal::MAX_PERMITTED_DATA_INCREASE
+                    core::mem::size_of::<quasar_lang::__internal::RuntimeAccount>()
+                    + quasar_lang::__internal::MAX_PERMITTED_DATA_INCREASE
                     + core::mem::size_of::<u64>();
 
-                let base = buf.as_mut_ptr() as *mut quasar_core::__internal::AccountView;
+                let base = buf.as_mut_ptr() as *mut quasar_lang::__internal::AccountView;
 
                 #(#parse_steps)*
 

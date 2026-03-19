@@ -1,6 +1,6 @@
 [package]
-name = "quasar-core"
-description = "Zero-copy Solana program framework — core primitives, account types, CPI builder, and events"
+name = "quasar-lang"
+description = "Zero-copy Solana program framework"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

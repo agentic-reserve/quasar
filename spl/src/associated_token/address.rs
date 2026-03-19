@@ -1,6 +1,6 @@
 use {
     crate::helpers::constants::{ATA_PROGRAM_ID, SPL_TOKEN_ID},
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
 };
 
 /// Derive the associated token account address for a wallet and mint.
@@ -29,7 +29,7 @@ pub fn get_associated_token_address_with_program(
     mint: &Address,
     token_program: &Address,
 ) -> (Address, u8) {
-    match quasar_core::pda::based_try_find_program_address(
+    match quasar_lang::pda::based_try_find_program_address(
         &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()],
         &ATA_PROGRAM_ID,
     ) {
@@ -52,7 +52,7 @@ pub const fn get_associated_token_address_with_program_const(
     mint: &Address,
     token_program: &Address,
 ) -> (Address, u8) {
-    quasar_core::pda::find_program_address_const(
+    quasar_lang::pda::find_program_address_const(
         &[wallet.as_array(), token_program.as_array(), mint.as_array()],
         &ATA_PROGRAM_ID,
     )

@@ -5,6 +5,20 @@ use {
 
 pub fn run_instruction(name: &str) -> CliResult {
     let snake = name.replace('-', "_");
+
+    // Validate: must be a valid Rust identifier (ascii alphanumeric + underscore, not starting with digit)
+    if snake.is_empty()
+        || snake.starts_with(|c: char| c.is_ascii_digit())
+        || !snake.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+    {
+        eprintln!(
+            "  {}",
+            style::fail(&format!("invalid instruction name: \"{name}\""))
+        );
+        eprintln!("  {}", style::dim("must be a valid Rust identifier (e.g. transfer, create_pool)"));
+        std::process::exit(1);
+    }
+
     let instructions_dir = Path::new("src").join("instructions");
     let lib_path = Path::new("src").join("lib.rs");
 
@@ -28,7 +42,7 @@ pub fn run_instruction(name: &str) -> CliResult {
     // Write the instruction file
     let pascal = snake_to_pascal(&snake);
     let content = format!(
-        r#"use quasar_core::prelude::*;
+        r#"use quasar_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct {pascal}<'info> {{

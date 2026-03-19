@@ -1,6 +1,6 @@
 use {
     alloc::vec,
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
     solana_instruction::{AccountMeta, Instruction},
 };
 

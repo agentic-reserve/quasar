@@ -1,6 +1,6 @@
 use {
     crate::{errors::TestError, state::ErrorTestAccount},
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
 };
 
 pub const EXPECTED_ADDR: Address = Address::new_from_array([99u8; 32]);

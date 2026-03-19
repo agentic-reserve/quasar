@@ -12,9 +12,9 @@ workspace = true
 [features]
 client = []
 debug = []
-alloc = ["quasar-core/alloc"]
+alloc = ["quasar-lang/alloc"]
 
 [dependencies]
-quasar-core = { path = "../../../core" }
+quasar-lang = { path = "../../../lang" }
 
 [dev-dependencies]

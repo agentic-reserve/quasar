@@ -1,4 +1,4 @@
-use quasar_core::{prelude::*, remaining::RemainingAccounts};
+use quasar_lang::{prelude::*, remaining::RemainingAccounts};
 
 #[derive(Accounts)]
 pub struct RemainingAccountsCheck<'info> {

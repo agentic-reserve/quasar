@@ -1,9 +1,9 @@
 #![allow(unexpected_cfgs)]
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 solana_address::declare_id!("11111111111111111111111111111112");
 
-type Vec<T, const N: usize> = quasar_core::dynamic::Vec<T, u32, N>;
+type Vec<T, const N: usize> = quasar_lang::dynamic::Vec<T, u32, N>;
 
 #[derive(Accounts)]
 pub struct Test<'info> {

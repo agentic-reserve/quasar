@@ -1,4 +1,4 @@
-use {crate::state::MixedAccount, quasar_core::prelude::*};
+use {crate::state::MixedAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct MixedAccountCheck<'info> {

@@ -356,7 +356,7 @@ pub(crate) fn instruction(attr: TokenStream, item: TokenStream) -> TokenStream {
                                 core::mem::size_of::<#ok_ty>(),
                             )
                         };
-                        quasar_core::return_data::set_return_data(__bytes);
+                        quasar_lang::return_data::set_return_data(__bytes);
                         Ok(())
                     }
                     Err(e) => Err(e),

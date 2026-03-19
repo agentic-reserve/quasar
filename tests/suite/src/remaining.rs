@@ -1,6 +1,6 @@
 use {
     mollusk_svm::{result::ProgramResult, Mollusk},
-    quasar_core::{error::QuasarError, prelude::ProgramError},
+    quasar_lang::{error::QuasarError, prelude::ProgramError},
     quasar_test_misc::client::*,
     solana_account::Account,
     solana_address::Address,

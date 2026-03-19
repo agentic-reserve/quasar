@@ -165,4 +165,66 @@ impl GlobalConfig {
         std::fs::write(path, toml_str)?;
         Ok(())
     }
+
+    pub fn load_from_str(s: &str) -> Self {
+        toml::from_str(s).unwrap_or_default()
+    }
+
+    pub fn to_toml(&self) -> String {
+        toml::to_string_pretty(self).unwrap_or_default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_config_has_animation_enabled() {
+        let config = GlobalConfig::default();
+        assert!(config.ui.animation);
+    }
+
+    #[test]
+    fn animation_disabled_survives_roundtrip() {
+        let config = GlobalConfig {
+            ui: UiConfig {
+                animation: false,
+                ..UiConfig::default()
+            },
+            ..GlobalConfig::default()
+        };
+        let toml_str = config.to_toml();
+        let loaded = GlobalConfig::load_from_str(&toml_str);
+        assert!(!loaded.ui.animation);
+    }
+
+    #[test]
+    fn empty_config_defaults_animation_true() {
+        let loaded = GlobalConfig::load_from_str("");
+        assert!(loaded.ui.animation);
+    }
+
+    #[test]
+    fn saved_config_disables_animation() {
+        // Simulates the init flow: default config → save with animation: false
+        let globals = GlobalConfig::default();
+        assert!(globals.ui.animation);
+
+        let saved = GlobalConfig {
+            defaults: GlobalDefaults {
+                toolchain: Some("solana".into()),
+                framework: Some("quasarsvm-rust".into()),
+                template: Some("minimal".into()),
+            },
+            ui: UiConfig {
+                animation: false,
+                ..globals.ui
+            },
+        };
+        let toml_str = saved.to_toml();
+        let reloaded = GlobalConfig::load_from_str(&toml_str);
+        assert!(!reloaded.ui.animation);
+        assert_eq!(reloaded.defaults.toolchain.as_deref(), Some("solana"));
+    }
 }

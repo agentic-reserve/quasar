@@ -794,7 +794,7 @@ fn test_signer_not_signer_returns_missing_sig() {
     assert_eq!(
         result.program_result,
         mollusk_svm::result::ProgramResult::Failure(
-            quasar_core::prelude::ProgramError::MissingRequiredSignature
+            quasar_lang::prelude::ProgramError::MissingRequiredSignature
         )
     );
 }
@@ -893,7 +893,7 @@ fn test_mut_not_writable_returns_immutable() {
 
     assert_eq!(
         result.program_result,
-        mollusk_svm::result::ProgramResult::Failure(quasar_core::prelude::ProgramError::Immutable)
+        mollusk_svm::result::ProgramResult::Failure(quasar_lang::prelude::ProgramError::Immutable)
     );
 }
 
@@ -1152,7 +1152,7 @@ fn test_constraint_custom_error_fails_with_custom_code() {
 
     assert_eq!(
         result.program_result,
-        mollusk_svm::result::ProgramResult::Failure(quasar_core::prelude::ProgramError::Custom(2)),
+        mollusk_svm::result::ProgramResult::Failure(quasar_lang::prelude::ProgramError::Custom(2)),
         "custom error constraint should return TestError::CustomConstraint (2)"
     );
 }

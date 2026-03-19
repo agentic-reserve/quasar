@@ -51,7 +51,7 @@
 //! | Token-2022 extensions beyond 165/82 bytes | Layout-dependent on runtime |
 
 use {
-    quasar_core::{
+    quasar_lang::{
         __internal::{AccountView, RuntimeAccount, MAX_PERMITTED_DATA_INCREASE, NOT_BORROWED},
         accounts::{account::set_lamports, Account},
         traits::*,
@@ -1331,11 +1331,11 @@ fn maybeunit_init_then_read_every_byte_transfer_checked() {
 #[test]
 fn keys_eq_spl_token_id() {
     // Verify the SPL_TOKEN_ID constant matches expected bytes
-    assert!(quasar_core::keys_eq(
+    assert!(quasar_lang::keys_eq(
         &SPL_TOKEN_ID,
         &Address::new_from_array(SPL_TOKEN_BYTES)
     ));
-    assert!(!quasar_core::keys_eq(
+    assert!(!quasar_lang::keys_eq(
         &SPL_TOKEN_ID,
         &Address::new_from_array(TOKEN_2022_BYTES)
     ));
@@ -1343,11 +1343,11 @@ fn keys_eq_spl_token_id() {
 
 #[test]
 fn keys_eq_token_2022_id() {
-    assert!(quasar_core::keys_eq(
+    assert!(quasar_lang::keys_eq(
         &TOKEN_2022_ID,
         &Address::new_from_array(TOKEN_2022_BYTES)
     ));
-    assert!(!quasar_core::keys_eq(
+    assert!(!quasar_lang::keys_eq(
         &TOKEN_2022_ID,
         &Address::new_from_array(SPL_TOKEN_BYTES)
     ));
@@ -1393,7 +1393,7 @@ fn account_view_owner_read_for_interface_check() {
 
     // Explicitly test the owner read
     let owner = view.owner();
-    assert!(quasar_core::keys_eq(owner, &SPL_TOKEN_ID));
+    assert!(quasar_lang::keys_eq(owner, &SPL_TOKEN_ID));
 }
 
 #[test]
@@ -1405,7 +1405,7 @@ fn account_view_owner_read_token_2022() {
 
     let view = unsafe { buf.view() };
     let owner = view.owner();
-    assert!(quasar_core::keys_eq(owner, &TOKEN_2022_ID));
+    assert!(quasar_lang::keys_eq(owner, &TOKEN_2022_ID));
 }
 
 #[test]
@@ -1448,7 +1448,7 @@ fn interleaved_token_and_mint_deref() {
 #[test]
 fn spl_token_id_and_token_2022_id_differ() {
     // Verify the two program IDs are distinct (last byte differs)
-    assert!(!quasar_core::keys_eq(&SPL_TOKEN_ID, &TOKEN_2022_ID));
+    assert!(!quasar_lang::keys_eq(&SPL_TOKEN_ID, &TOKEN_2022_ID));
     // Verify specific byte difference
     assert_ne!(SPL_TOKEN_BYTES[31], TOKEN_2022_BYTES[31]);
 }

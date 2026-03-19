@@ -1,4 +1,4 @@
-use {crate::state::ThreeSeedAccount, quasar_core::prelude::*};
+use {crate::state::ThreeSeedAccount, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct InitThreeSeeds<'info> {

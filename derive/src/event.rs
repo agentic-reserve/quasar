@@ -73,15 +73,15 @@ pub(crate) fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
                 let ptr = buf.as_mut_ptr() as *mut u8;
                 unsafe {
                     core::ptr::copy_nonoverlapping(
-                        <Self as quasar_core::traits::Event>::DISCRIMINATOR.as_ptr(),
+                        <Self as quasar_lang::traits::Event>::DISCRIMINATOR.as_ptr(),
                         ptr,
                         #disc_len,
                     );
                 }
-                <Self as quasar_core::traits::Event>::write_data(self, unsafe {
+                <Self as quasar_lang::traits::Event>::write_data(self, unsafe {
                     core::slice::from_raw_parts_mut(ptr.add(#disc_len), #data_size)
                 });
-                quasar_core::log::log_data(&[unsafe { buf.assume_init_ref() }]);
+                quasar_lang::log::log_data(&[unsafe { buf.assume_init_ref() }]);
             }
         }
     };
@@ -97,7 +97,7 @@ pub(crate) fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
             "event struct has padding; cannot use memcpy serialization"
         );
 
-        impl quasar_core::traits::Event for #name {
+        impl quasar_lang::traits::Event for #name {
             const DISCRIMINATOR: &'static [u8] = &[#(#disc_bytes),*];
             const DATA_SIZE: usize = #data_size;
 

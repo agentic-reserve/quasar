@@ -441,10 +441,10 @@ pub(super) fn generate_dynamic_account(
                     .lamports()
                     .checked_add(self.__view.lamports())
                     .ok_or(ProgramError::InvalidArgument)?;
-                quasar_core::accounts::account::set_lamports(destination, new_lamports);
+                quasar_lang::accounts::account::set_lamports(destination, new_lamports);
                 self.__view.set_lamports(0);
-                unsafe { self.__view.assign(&quasar_core::cpi::system::SYSTEM_PROGRAM_ID) };
-                quasar_core::accounts::account::resize(&mut *self.__view, 0)?;
+                unsafe { self.__view.assign(&quasar_lang::cpi::system::SYSTEM_PROGRAM_ID) };
+                quasar_lang::accounts::account::resize(&mut *self.__view, 0)?;
                 Ok(())
             }
 
@@ -455,7 +455,7 @@ pub(super) fn generate_dynamic_account(
                 payer: &AccountView,
                 rent: Option<&Rent>,
             ) -> Result<(), ProgramError> {
-                quasar_core::accounts::account::realloc_account(&mut *self.__view, new_space, payer, rent)
+                quasar_lang::accounts::account::realloc_account(&mut *self.__view, new_space, payer, rent)
             }
 
             #(#accessor_methods)*
@@ -474,7 +474,7 @@ pub(super) fn generate_dynamic_account(
                 let __space = Self::MIN_SPACE #(#space_terms)*;
 
                 if __space > self.__view.data_len() {
-                    quasar_core::accounts::account::realloc_account(&mut *self.__view, __space, payer, rent)?;
+                    quasar_lang::accounts::account::realloc_account(&mut *self.__view, __space, payer, rent)?;
                 }
 
                 let __len = self.__view.data_len();

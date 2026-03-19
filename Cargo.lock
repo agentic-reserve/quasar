@@ -511,6 +511,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "block2"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdeb9d870516001442e364c5220d3574d2da8dc765554b4a617230d33fa58ef5"
+dependencies = [
+ "objc2",
+]
+
+[[package]]
 name = "borsh"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -676,6 +685,7 @@ dependencies = [
  "bs58",
  "clap",
  "clap_complete",
+ "ctrlc",
  "dialoguer",
  "dirs",
  "ed25519-dalek",
@@ -817,6 +827,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ctrlc"
+version = "3.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0b1fab2ae45819af2d0731d60f2afe17227ebb1a1538a236da84c93e9a60162"
+dependencies = [
+ "dispatch2",
+ "nix",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "curve25519-dalek"
 version = "4.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -954,6 +975,18 @@ dependencies = [
  "option-ext",
  "redox_users",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "dispatch2"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e0e367e4e7da84520dedcac1901e4da967309406d1e51017ae1abfb97adbd38"
+dependencies = [
+ "bitflags",
+ "block2",
+ "libc",
+ "objc2",
 ]
 
 [[package]]
@@ -1695,7 +1728,7 @@ dependencies = [
  "solana-program-error",
  "solana-program-runtime",
  "solana-pubkey 4.1.0",
- "solana-rent 3.1.0",
+ "solana-rent",
  "solana-sdk-ids",
  "solana-slot-hashes",
  "solana-stake-interface",
@@ -1730,7 +1763,7 @@ dependencies = [
  "solana-account",
  "solana-program-pack",
  "solana-pubkey 4.1.0",
- "solana-rent 3.1.0",
+ "solana-rent",
  "spl-associated-token-account-interface",
  "spl-token-interface",
 ]
@@ -1745,8 +1778,20 @@ dependencies = [
  "solana-instruction",
  "solana-program-error",
  "solana-pubkey 4.1.0",
- "solana-rent 3.1.0",
+ "solana-rent",
  "solana-transaction-error",
+]
+
+[[package]]
+name = "nix"
+version = "0.31.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d6d0705320c1e6ba1d912b5e37cf18071b6c2e9b7fa8215a1e8a7651966f5d3"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "cfg_aliases",
+ "libc",
 ]
 
 [[package]]
@@ -1867,6 +1912,21 @@ dependencies = [
  "quote",
  "syn 2.0.117",
 ]
+
+[[package]]
+name = "objc2"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a12a8ed07aefc768292f076dc3ac8c48f3781c8f2d5851dd3d98950e8c5a89f"
+dependencies = [
+ "objc2-encode",
+]
+
+[[package]]
+name = "objc2-encode"
+version = "4.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef25abbcd74fb2609453eb695bd2f860d389e457f67dc17cafc8b8cbc89d0c33"
 
 [[package]]
 name = "object"
@@ -2062,31 +2122,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "quasar"
-version = "0.1.0"
-dependencies = [
- "quasar-core",
- "quasar-spl",
-]
-
-[[package]]
-name = "quasar-core"
-version = "0.1.0"
-dependencies = [
- "const-crypto",
- "quasar-derive",
- "quasar-pod",
- "solana-account-view 2.0.0",
- "solana-address 2.3.0",
- "solana-define-syscall 5.0.0",
- "solana-instruction",
- "solana-instruction-view 2.0.0",
- "solana-program-error",
- "solana-program-log",
- "trybuild",
-]
-
-[[package]]
 name = "quasar-derive"
 version = "0.1.0"
 dependencies = [
@@ -2103,7 +2138,7 @@ version = "0.1.0"
 dependencies = [
  "mollusk-svm",
  "mollusk-svm-programs-token",
- "quasar-core",
+ "quasar-lang",
  "quasar-spl",
  "solana-account",
  "solana-address 2.3.0",
@@ -2124,11 +2159,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "quasar-lang"
+version = "0.1.0"
+dependencies = [
+ "const-crypto",
+ "quasar-derive",
+ "quasar-pod",
+ "solana-account-view 2.0.0",
+ "solana-address 2.3.0",
+ "solana-define-syscall 5.0.0",
+ "solana-instruction",
+ "solana-instruction-view 2.0.0",
+ "solana-program-error",
+ "solana-program-log",
+ "trybuild",
+]
+
+[[package]]
 name = "quasar-multisig"
 version = "0.1.0"
 dependencies = [
  "mollusk-svm",
- "quasar-core",
+ "quasar-lang",
  "solana-account",
  "solana-address 2.3.0",
  "solana-instruction",
@@ -2163,60 +2215,37 @@ dependencies = [
 name = "quasar-spl"
 version = "0.1.0"
 dependencies = [
- "mollusk-svm",
- "mollusk-svm-programs-token",
- "quasar-core",
- "solana-account",
+ "quasar-lang",
  "solana-address 2.3.0",
- "solana-instruction",
  "solana-program-error",
- "solana-program-pack",
- "solana-rent 2.2.1",
- "spl-token-interface",
 ]
 
 [[package]]
 name = "quasar-test-errors"
 version = "0.1.0"
 dependencies = [
- "mollusk-svm",
- "quasar-core",
- "solana-account",
- "solana-address 2.3.0",
- "solana-instruction",
+ "quasar-lang",
 ]
 
 [[package]]
 name = "quasar-test-events"
 version = "0.1.0"
 dependencies = [
- "mollusk-svm",
- "quasar-core",
- "solana-account",
- "solana-address 2.3.0",
- "solana-instruction",
+ "quasar-lang",
 ]
 
 [[package]]
 name = "quasar-test-misc"
 version = "0.1.0"
 dependencies = [
- "mollusk-svm",
- "quasar-core",
- "solana-account",
- "solana-address 2.3.0",
- "solana-instruction",
+ "quasar-lang",
 ]
 
 [[package]]
 name = "quasar-test-pda"
 version = "0.1.0"
 dependencies = [
- "mollusk-svm",
- "quasar-core",
- "solana-account",
- "solana-address 2.3.0",
- "solana-instruction",
+ "quasar-lang",
 ]
 
 [[package]]
@@ -2225,7 +2254,7 @@ version = "0.1.0"
 dependencies = [
  "mollusk-svm",
  "mollusk-svm-programs-token",
- "quasar-core",
+ "quasar-lang",
  "quasar-spl",
  "quasar-test-errors",
  "quasar-test-events",
@@ -2244,26 +2273,15 @@ dependencies = [
 name = "quasar-test-sysvar"
 version = "0.1.0"
 dependencies = [
- "mollusk-svm",
- "quasar-core",
- "solana-account",
- "solana-address 2.3.0",
- "solana-instruction",
+ "quasar-lang",
 ]
 
 [[package]]
 name = "quasar-test-token-cpi"
 version = "0.1.0"
 dependencies = [
- "mollusk-svm",
- "mollusk-svm-programs-token",
- "quasar-core",
+ "quasar-lang",
  "quasar-spl",
- "solana-account",
- "solana-address 2.3.0",
- "solana-instruction",
- "solana-program-pack",
- "spl-token-interface",
 ]
 
 [[package]]
@@ -2271,7 +2289,7 @@ name = "quasar-vault"
 version = "0.1.0"
 dependencies = [
  "mollusk-svm",
- "quasar-core",
+ "quasar-lang",
  "solana-account",
  "solana-instruction",
 ]
@@ -2858,7 +2876,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 3.0.1",
+ "solana-sdk-macro",
  "solana-sysvar-id",
 ]
 
@@ -2928,7 +2946,7 @@ dependencies = [
  "serde_derive",
  "solana-hash 4.2.0",
  "solana-sdk-ids",
- "solana-sdk-macro 3.0.1",
+ "solana-sdk-macro",
  "solana-sysvar-id",
 ]
 
@@ -2941,7 +2959,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 3.0.1",
+ "solana-sdk-macro",
  "solana-sysvar-id",
 ]
 
@@ -3077,7 +3095,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 3.0.1",
+ "solana-sdk-macro",
  "solana-sysvar-id",
 ]
 
@@ -3293,7 +3311,7 @@ dependencies = [
  "solana-loader-v3-interface",
  "solana-program-entrypoint",
  "solana-pubkey 3.0.0",
- "solana-rent 3.1.0",
+ "solana-rent",
  "solana-sbpf",
  "solana-sdk-ids",
  "solana-slot-hashes",
@@ -3333,15 +3351,6 @@ dependencies = [
 
 [[package]]
 name = "solana-rent"
-version = "2.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1aea8fdea9de98ca6e8c2da5827707fb3842833521b528a713810ca685d2480"
-dependencies = [
- "solana-sdk-macro 2.2.1",
-]
-
-[[package]]
-name = "solana-rent"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e860d5499a705369778647e97d760f7670adfb6fc8419dd3d568deccd46d5487"
@@ -3349,7 +3358,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-sdk-ids",
- "solana-sdk-macro 3.0.1",
+ "solana-sdk-macro",
  "solana-sysvar-id",
 ]
 
@@ -3383,18 +3392,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "def234c1956ff616d46c9dd953f251fa7096ddbaa6d52b165218de97882b7280"
 dependencies = [
  "solana-address 2.3.0",
-]
-
-[[package]]
-name = "solana-sdk-macro"
-version = "2.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86280da8b99d03560f6ab5aca9de2e38805681df34e0bb8f238e69b29433b9df"
-dependencies = [
- "bs58",
- "proc-macro2",
- "quote",
- "syn 2.0.117",
 ]
 
 [[package]]
@@ -3639,9 +3636,9 @@ dependencies = [
  "solana-program-error",
  "solana-program-memory",
  "solana-pubkey 4.1.0",
- "solana-rent 3.1.0",
+ "solana-rent",
  "solana-sdk-ids",
- "solana-sdk-macro 3.0.1",
+ "solana-sdk-macro",
  "solana-slot-hashes",
  "solana-slot-history",
  "solana-sysvar-id",
@@ -3687,7 +3684,7 @@ dependencies = [
  "solana-instruction",
  "solana-instructions-sysvar",
  "solana-pubkey 3.0.0",
- "solana-rent 3.1.0",
+ "solana-rent",
  "solana-sbpf",
  "solana-sdk-ids",
 ]
@@ -4038,7 +4035,7 @@ name = "upstream-vault"
 version = "0.1.0"
 dependencies = [
  "mollusk-svm",
- "quasar-core",
+ "quasar-lang",
  "solana-account",
  "solana-address 2.3.0",
  "solana-instruction",

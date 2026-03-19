@@ -2,7 +2,7 @@
 //!
 //! These macros generate the parsing, validation, and dispatch code that makes
 //! Quasar programs work. Users typically access them through
-//! `quasar_core::prelude`.
+//! `quasar_lang::prelude`.
 //!
 //! | Macro | Purpose |
 //! |-------|---------|

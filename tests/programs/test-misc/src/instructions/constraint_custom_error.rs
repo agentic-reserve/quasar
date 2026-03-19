@@ -1,6 +1,6 @@
 use {
     crate::{errors::TestError, state::SimpleAccount},
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
 };
 
 #[derive(Accounts)]

@@ -10,11 +10,11 @@ crate-type = ["cdylib", "lib"]
 workspace = true
 
 [dependencies]
-quasar-core = { path = "../../../core" }
+quasar-lang = { path = "../../../lang" }
 
 [dev-dependencies]
 
 [features]
 default = ["alloc"]
-alloc = ["quasar-core/alloc"]
+alloc = ["quasar-lang/alloc"]
 debug = []

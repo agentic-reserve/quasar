@@ -9,7 +9,7 @@ mod sync_native;
 mod transfer;
 mod transfer_checked;
 
-use quasar_core::{cpi::CpiCall, prelude::*};
+use quasar_lang::{cpi::CpiCall, prelude::*};
 pub use {initialize_account::initialize_account3, initialize_mint::initialize_mint2};
 
 /// Trait for types that can execute SPL Token CPI calls.

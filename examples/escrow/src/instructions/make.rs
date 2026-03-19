@@ -1,6 +1,6 @@
 use {
     crate::{events::MakeEvent, state::Escrow},
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
     quasar_spl::{Mint, Token, TokenCpi},
 };
 

@@ -1,6 +1,6 @@
 use {
     mollusk_svm::{program::keyed_account_for_system_program, result::ProgramResult, Mollusk},
-    quasar_core::prelude::ProgramError,
+    quasar_lang::prelude::ProgramError,
     quasar_test_misc::client::*,
     solana_account::Account,
     solana_address::Address,

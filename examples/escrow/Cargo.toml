@@ -15,7 +15,7 @@ client = []
 debug = []
 
 [dependencies]
-quasar-core = { path = "../../core" }
+quasar-lang = { path = "../../lang" }
 quasar-spl = { path = "../../spl" }
 solana-address = { version = "2.2.0" }
 solana-instruction = { version = "3.2.0" }

@@ -1,4 +1,4 @@
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 /// Tests: "Account 'destination' (index 1): must be writable"
 #[derive(Accounts)]

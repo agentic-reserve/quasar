@@ -24,11 +24,11 @@ pub fn generate(crate_path: &Path, generate_typescript: bool) -> CliResult {
 
     // Write IDL JSON to target/idl/
     let idl_dir = PathBuf::from("target").join("idl");
-    std::fs::create_dir_all(&idl_dir).expect("Failed to create target/idl directory");
+    std::fs::create_dir_all(&idl_dir)?;
 
     let idl_path = idl_dir.join(format!("{}.idl.json", idl.metadata.name));
-    let json = serde_json::to_string_pretty(&idl).expect("Failed to serialize IDL");
-    std::fs::write(&idl_path, &json).expect("Failed to write IDL file");
+    let json = serde_json::to_string_pretty(&idl).map_err(|e| anyhow::anyhow!("failed to serialize IDL: {e}"))?;
+    std::fs::write(&idl_path, &json)?;
 
     if generate_typescript {
         let ts_code = codegen::typescript::generate_ts_client(&idl);
@@ -39,12 +39,9 @@ pub fn generate(crate_path: &Path, generate_typescript: bool) -> CliResult {
             .join("client")
             .join("typescript")
             .join(&idl.metadata.name);
-        std::fs::create_dir_all(&ts_dir)
-            .expect("Failed to create target/client/typescript/<name> directory");
-        let ts_path = ts_dir.join("web3.ts");
-        std::fs::write(&ts_path, &ts_code).expect("Failed to write TS client");
-        let ts_kit_path = ts_dir.join("kit.ts");
-        std::fs::write(&ts_kit_path, &ts_kit_code).expect("Failed to write TS kit client");
+        std::fs::create_dir_all(&ts_dir)?;
+        std::fs::write(ts_dir.join("web3.ts"), &ts_code)?;
+        std::fs::write(ts_dir.join("kit.ts"), &ts_kit_code)?;
 
         // Write package.json for the TS client
         let needs_codecs =
@@ -72,8 +69,7 @@ pub fn generate(crate_path: &Path, generate_typescript: bool) -> CliResult {
             crate_name = idl.metadata.crate_name,
             version = idl.metadata.version,
         );
-        std::fs::write(ts_dir.join("package.json"), &ts_package_json)
-            .expect("Failed to write TS client package.json");
+        std::fs::write(ts_dir.join("package.json"), &ts_package_json)?;
     }
 
     // Write Rust client as a standalone crate in target/client/rust/<name>-client/
@@ -83,13 +79,10 @@ pub fn generate(crate_path: &Path, generate_typescript: bool) -> CliResult {
         .join("rust")
         .join(format!("{}-client", crate_name));
     let client_src_dir = client_dir.join("src");
-    std::fs::create_dir_all(&client_src_dir)
-        .expect("Failed to create target/client/rust/<name>-client/src directory");
+    std::fs::create_dir_all(&client_src_dir)?;
 
-    std::fs::write(client_dir.join("Cargo.toml"), &client_cargo_toml)
-        .expect("Failed to write client Cargo.toml");
-    std::fs::write(client_src_dir.join("lib.rs"), &client_code)
-        .expect("Failed to write client lib.rs");
+    std::fs::write(client_dir.join("Cargo.toml"), &client_cargo_toml)?;
+    std::fs::write(client_src_dir.join("lib.rs"), &client_code)?;
 
     Ok(())
 }

@@ -17,6 +17,11 @@ pub fn run(action: Option<ConfigAction>) -> CliResult {
             }
         }
         Some(ConfigAction::Set { key, value }) => {
+            if let Err(valid) = validate_value(&key, &value) {
+                eprintln!("  {}", style::fail(&format!("invalid value for {key}: {value}")));
+                eprintln!("  {}", style::dim(&format!("valid: {valid}")));
+                std::process::exit(1);
+            }
             if set_value(&mut config, &key, &value) {
                 config.save()?;
                 println!("  {}", style::success(&format!("{key} = {value}")));
@@ -26,7 +31,12 @@ pub fn run(action: Option<ConfigAction>) -> CliResult {
         }
         Some(ConfigAction::List) => print_all(&config),
         Some(ConfigAction::Reset) => {
+            let was_animated = config.ui.animation;
             config = GlobalConfig::default();
+            // Preserve animation=false once it's been shown
+            if !was_animated {
+                config.ui.animation = false;
+            }
             config.save()?;
             println!("  {}", style::success("config reset to defaults"));
             println!();
@@ -94,7 +104,7 @@ const ITEMS: &[ConfigItem] = &[
     ConfigItem {
         key: "defaults.framework",
         label: "Default test framework",
-        kind: ConfigKind::Choice(&["none", "mollusk", "quasarsvm-web3js", "quasarsvm-kit"]),
+        kind: ConfigKind::Choice(&["none", "mollusk", "quasarsvm-rust", "quasarsvm-web3js", "quasarsvm-kit"]),
     },
     ConfigItem {
         key: "defaults.template",
@@ -262,6 +272,41 @@ fn set_value(config: &mut GlobalConfig, key: &str, value: &str) -> bool {
         _ => return false,
     }
     true
+}
+
+/// Returns Ok(()) if valid, Err(valid_options_string) if not.
+fn validate_value(key: &str, value: &str) -> Result<(), &'static str> {
+    match key {
+        "defaults.toolchain" => {
+            if matches!(value, "solana" | "upstream" | "none" | "null" | "") {
+                Ok(())
+            } else {
+                Err("solana, upstream")
+            }
+        }
+        "defaults.framework" => {
+            if matches!(value, "none" | "mollusk" | "quasarsvm-rust" | "quasarsvm-web3js" | "quasarsvm-kit" | "null" | "") {
+                Ok(())
+            } else {
+                Err("none, mollusk, quasarsvm-rust, quasarsvm-web3js, quasarsvm-kit")
+            }
+        }
+        "defaults.template" => {
+            if matches!(value, "minimal" | "full" | "none" | "null" | "") {
+                Ok(())
+            } else {
+                Err("minimal, full")
+            }
+        }
+        "ui.animation" | "ui.color" | "ui.timing" => {
+            if matches!(value, "true" | "false" | "1" | "0" | "yes" | "no" | "on" | "off") {
+                Ok(())
+            } else {
+                Err("true, false")
+            }
+        }
+        _ => Ok(()), // unknown keys are handled elsewhere
+    }
 }
 
 fn some_or_none(s: &str) -> Option<String> {

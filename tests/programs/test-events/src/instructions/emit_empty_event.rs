@@ -1,4 +1,4 @@
-use {crate::events::EmptyEvent, quasar_core::prelude::*};
+use {crate::events::EmptyEvent, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct EmitEmptyEvent<'info> {

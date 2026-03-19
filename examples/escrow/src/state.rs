@@ -1,4 +1,4 @@
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 #[account(discriminator = 1)]
 pub struct Escrow {

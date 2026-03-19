@@ -1,7 +1,7 @@
 use {
     super::AssociatedTokenProgram,
     crate::instructions::TokenCpi,
-    quasar_core::{
+    quasar_lang::{
         cpi::{CpiCall, InstructionAccount},
         prelude::*,
     },

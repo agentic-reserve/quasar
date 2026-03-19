@@ -1,6 +1,6 @@
 use {
     crate::state::ClockFullSnapshot,
-    quasar_core::{prelude::*, sysvars::clock::Clock},
+    quasar_lang::{prelude::*, sysvars::clock::Clock},
 };
 
 #[derive(Accounts)]

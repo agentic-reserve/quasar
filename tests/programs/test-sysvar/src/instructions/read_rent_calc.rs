@@ -1,6 +1,6 @@
 use {
     crate::state::RentCalcSnapshot,
-    quasar_core::{
+    quasar_lang::{
         prelude::*,
         sysvars::{rent::Rent, Sysvar as _},
     },

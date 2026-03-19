@@ -33,7 +33,7 @@
 //! alignment checking.
 
 #![no_std]
-extern crate self as quasar_core;
+extern crate self as quasar_lang;
 
 /// Internal re-exports for proc macro codegen. Not part of the public API.
 /// Breaking changes to this module are not considered semver violations.

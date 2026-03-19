@@ -271,7 +271,7 @@ fn save_current_profile(program_name: &str, result: &ProfileResult) {
 /// Simplify a demangled Rust function name for the terminal.
 ///
 /// Turns `<quasar_test::instructions::initialize::Initialize as
-/// quasar_core::Accounts>::verify` into `Initialize::verify`
+/// quasar_lang::Accounts>::verify` into `Initialize::verify`
 fn simplify_name(name: &str) -> String {
     let name = name.trim();
 

@@ -1,6 +1,6 @@
 use {
     crate::{events::RefundEvent, state::Escrow},
-    quasar_core::prelude::*,
+    quasar_lang::prelude::*,
     quasar_spl::{Mint, Token, TokenClose, TokenCpi},
 };
 

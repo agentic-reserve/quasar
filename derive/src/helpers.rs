@@ -509,15 +509,15 @@ pub(crate) fn map_to_pod_type(ty: &Type) -> proc_macro2::TokenStream {
         if let Some(seg) = type_path.path.segments.last() {
             let ident_str = seg.ident.to_string();
             return match ident_str.as_str() {
-                "u128" => quote! { quasar_core::pod::PodU128 },
-                "u64" => quote! { quasar_core::pod::PodU64 },
-                "u32" => quote! { quasar_core::pod::PodU32 },
-                "u16" => quote! { quasar_core::pod::PodU16 },
-                "i128" => quote! { quasar_core::pod::PodI128 },
-                "i64" => quote! { quasar_core::pod::PodI64 },
-                "i32" => quote! { quasar_core::pod::PodI32 },
-                "i16" => quote! { quasar_core::pod::PodI16 },
-                "bool" => quote! { quasar_core::pod::PodBool },
+                "u128" => quote! { quasar_lang::pod::PodU128 },
+                "u64" => quote! { quasar_lang::pod::PodU64 },
+                "u32" => quote! { quasar_lang::pod::PodU32 },
+                "u16" => quote! { quasar_lang::pod::PodU16 },
+                "i128" => quote! { quasar_lang::pod::PodI128 },
+                "i64" => quote! { quasar_lang::pod::PodI64 },
+                "i32" => quote! { quasar_lang::pod::PodI32 },
+                "i16" => quote! { quasar_lang::pod::PodI16 },
+                "bool" => quote! { quasar_lang::pod::PodBool },
                 _ => quote! { #ty },
             };
         }
@@ -534,15 +534,15 @@ fn zc_assign_expr(
         if let Some(seg) = type_path.path.segments.last() {
             let pod_type = match seg.ident.to_string().as_str() {
                 "u8" | "i8" => return quote! { __zc.#field_name = #value; },
-                "bool" => quote! { quasar_core::pod::PodBool },
-                "u16" => quote! { quasar_core::pod::PodU16 },
-                "u32" => quote! { quasar_core::pod::PodU32 },
-                "u64" => quote! { quasar_core::pod::PodU64 },
-                "u128" => quote! { quasar_core::pod::PodU128 },
-                "i16" => quote! { quasar_core::pod::PodI16 },
-                "i32" => quote! { quasar_core::pod::PodI32 },
-                "i64" => quote! { quasar_core::pod::PodI64 },
-                "i128" => quote! { quasar_core::pod::PodI128 },
+                "bool" => quote! { quasar_lang::pod::PodBool },
+                "u16" => quote! { quasar_lang::pod::PodU16 },
+                "u32" => quote! { quasar_lang::pod::PodU32 },
+                "u64" => quote! { quasar_lang::pod::PodU64 },
+                "u128" => quote! { quasar_lang::pod::PodU128 },
+                "i16" => quote! { quasar_lang::pod::PodI16 },
+                "i32" => quote! { quasar_lang::pod::PodI32 },
+                "i64" => quote! { quasar_lang::pod::PodI64 },
+                "i128" => quote! { quasar_lang::pod::PodI128 },
                 _ => return quote! { __zc.#field_name = #value; },
             };
             return quote! { __zc.#field_name = #pod_type::from(#value); };

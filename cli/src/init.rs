@@ -1,6 +1,6 @@
 use {
     crate::{
-        config::{GlobalConfig, GlobalDefaults},
+        config::{GlobalConfig, GlobalDefaults, UiConfig},
         error::CliResult,
         toolchain,
     },
@@ -119,12 +119,21 @@ fn print_banner() {
     }
 
     use std::{thread, time::Duration};
+
+    // Restore cursor if interrupted during animation
+    ctrlc::set_handler(move || {
+        print!("\x1b[?25h");
+        std::process::exit(130);
+    })
+    .ok();
+
     let mut out = stdout.lock();
     write!(out, "\x1b[?25l").ok();
 
     let w: usize = 70;
     let h: usize = 11; // 1 blank + 7 figlet + 1 blank + 1 tagline + 1 byline
-    let n_total: usize = 8; // 6 aurora + 1 transition + 1 final
+    let n_frames: usize = 22;
+    let nebula_w: f32 = 30.0; // width of the sweeping nebula band
 
     // FIGlet "Quasar" — block style, 7 lines tall
     #[rustfmt::skip]
@@ -141,6 +150,14 @@ fn print_banner() {
     let fig_w = fig.iter().map(|l| l.len()).max().unwrap_or(0);
     let fig_off = w.saturating_sub(fig_w) / 2;
 
+    let tagline = "Build programs that execute at the speed of light";
+    let tag_chars: Vec<char> = tagline.chars().collect();
+    let tag_off = w.saturating_sub(tag_chars.len()) / 2;
+
+    let byline = "by blueshift.gg";
+    let by_chars: Vec<char> = byline.chars().collect();
+    let by_off = w.saturating_sub(by_chars.len()) / 2;
+
     // Reserve space
     writeln!(out).ok();
     for _ in 0..h {
@@ -148,18 +165,20 @@ fn print_banner() {
     }
     out.flush().ok();
 
-    for frame in 0..n_total {
+    for frame in 0..n_frames {
         write!(out, "\x1b[{h}A").ok();
-        let is_final = frame == n_total - 1;
-        let is_trans = frame == n_total - 2;
-        let fade: f32 = if is_trans { 0.15 } else { 1.0 };
+        let is_final = frame == n_frames - 1;
+
+        // Leading edge sweeps left → right, revealing text in its wake
+        let t = frame as f32 / (n_frames - 2).max(1) as f32;
+        let edge = -nebula_w + t * (w as f32 + nebula_w * 2.0);
 
         #[allow(clippy::needless_range_loop)]
         for li in 0..h {
             write!(out, "\x1b[2K  ").ok();
 
             if is_final {
-                // ── Final: gradient FIGlet text + tagline ──
+                // ── Final clean frame ──
                 match li {
                     1..=7 => {
                         let row = &fig[li - 1];
@@ -175,17 +194,12 @@ fn print_banner() {
                         }
                     }
                     9 => {
-                        let tagline = "Build programs that execute at the speed of light";
-                        let tag_off = w.saturating_sub(tagline.len()) / 2;
                         for _ in 0..tag_off {
                             write!(out, " ").ok();
                         }
                         write!(out, "\x1b[1m{tagline}\x1b[0m").ok();
                     }
                     10 => {
-                        // "by " in grey + "blueshift.gg" in blue, centered
-                        let byline_len = 15; // "by blueshift.gg"
-                        let by_off = w.saturating_sub(byline_len) / 2;
                         for _ in 0..by_off {
                             write!(out, " ").ok();
                         }
@@ -194,35 +208,54 @@ fn print_banner() {
                     _ => {}
                 }
             } else {
-                // ── Aurora frame (+ text overlay on transition) ──
+                // ── Nebula sweep: reveals text as it passes ──
                 for ci in 0..w {
-                    // FIGlet text overlay during transition
-                    if is_trans && (1..=7).contains(&li) {
-                        let tc = ci.wrapping_sub(fig_off);
-                        if tc < fig_w {
-                            let ch = fig[li - 1].get(tc).copied().unwrap_or(' ');
-                            if ch != ' ' {
-                                write!(out, "\x1b[36m{ch}\x1b[0m").ok();
-                                continue;
+                    let dist = ci as f32 - edge;
+
+                    // Text character at this position
+                    let text_ch = match li {
+                        1..=7 => {
+                            if ci >= fig_off && ci - fig_off < fig_w {
+                                fig[li - 1].get(ci - fig_off).copied().unwrap_or(' ')
+                            } else {
+                                ' '
                             }
                         }
-                    }
+                        9 => {
+                            if ci >= tag_off && ci - tag_off < tag_chars.len() {
+                                tag_chars[ci - tag_off]
+                            } else {
+                                ' '
+                            }
+                        }
+                        10 => {
+                            if ci >= by_off && ci - by_off < by_chars.len() {
+                                by_chars[ci - by_off]
+                            } else {
+                                ' '
+                            }
+                        }
+                        _ => ' ',
+                    };
 
-                    // Aurora cell
-                    let d = aurora_density(ci, li, frame) * fade;
+                    if dist < -nebula_w {
+                        // Behind the nebula: text fully revealed
+                        write_text_char(&mut out, text_ch, li, ci, by_off);
+                    } else if dist < nebula_w {
+                        // Inside the nebula band
+                        let blend = (dist + nebula_w) / (nebula_w * 2.0);
+                        let intensity = 1.0 - (dist.abs() / nebula_w);
+                        let d = aurora_density(ci, li, frame) * intensity;
 
-                    if d < 0.10 {
-                        write!(out, " ").ok();
-                    } else if d < 0.25 {
-                        write!(out, "\x1b[38;2;15;25;85m░\x1b[0m").ok();
-                    } else if d < 0.42 {
-                        write!(out, "\x1b[38;2;30;55;145m░\x1b[0m").ok();
-                    } else if d < 0.60 {
-                        write!(out, "\x1b[38;2;50;95;200m▒\x1b[0m").ok();
-                    } else if d < 0.78 {
-                        write!(out, "\x1b[38;2;75;140;235m▓\x1b[0m").ok();
+                        if blend < 0.3 && text_ch != ' ' {
+                            // Trailing edge: text bleeds through
+                            write_text_char(&mut out, text_ch, li, ci, by_off);
+                        } else {
+                            write_nebula_char(&mut out, d);
+                        }
                     } else {
-                        write!(out, "\x1b[38;2;100;170;255m█\x1b[0m").ok();
+                        // Ahead of nebula: dark
+                        write!(out, " ").ok();
                     }
                 }
             }
@@ -230,14 +263,49 @@ fn print_banner() {
         }
         out.flush().ok();
 
-        if frame < n_total - 1 {
-            thread::sleep(Duration::from_millis(if frame == 0 { 60 } else { 80 }));
+        if !is_final {
+            thread::sleep(Duration::from_millis(55));
         }
     }
 
     write!(out, "\x1b[?25h").ok();
     writeln!(out).ok();
     out.flush().ok();
+}
+
+fn write_text_char(out: &mut impl std::io::Write, ch: char, line: usize, col: usize, by_off: usize) {
+    if ch == ' ' {
+        write!(out, " ").ok();
+    } else {
+        match line {
+            1..=7 => { write!(out, "\x1b[36m{ch}\x1b[0m").ok(); }
+            9 => { write!(out, "\x1b[1m{ch}\x1b[0m").ok(); }
+            10 => {
+                if col - by_off < 3 {
+                    write!(out, "\x1b[90m{ch}\x1b[0m").ok();
+                } else {
+                    write!(out, "\x1b[36m{ch}\x1b[0m").ok();
+                }
+            }
+            _ => { write!(out, " ").ok(); }
+        };
+    }
+}
+
+fn write_nebula_char(out: &mut impl std::io::Write, d: f32) {
+    if d < 0.10 {
+        write!(out, " ").ok();
+    } else if d < 0.25 {
+        write!(out, "\x1b[38;2;15;25;85m░\x1b[0m").ok();
+    } else if d < 0.42 {
+        write!(out, "\x1b[38;2;30;55;145m░\x1b[0m").ok();
+    } else if d < 0.60 {
+        write!(out, "\x1b[38;2;50;95;200m▒\x1b[0m").ok();
+    } else if d < 0.78 {
+        write!(out, "\x1b[38;2;75;140;235m▓\x1b[0m").ok();
+    } else {
+        write!(out, "\x1b[38;2;100;170;255m█\x1b[0m").ok();
+    }
 }
 
 /// Aurora density — sine waves flowing rightward, tuned for sparse output.
@@ -291,7 +359,30 @@ pub fn run(
         || template_override.is_some()
         || toolchain_override.is_some();
 
-    if globals.ui.animation {
+    // Validate explicit flag values before proceeding
+    if let Some(ref f) = framework_override {
+        if !matches!(f.as_str(), "none" | "mollusk" | "quasarsvm-rust" | "quasarsvm-web3js" | "quasarsvm-kit") {
+            eprintln!("  {}", crate::style::fail(&format!("unknown framework: {f}")));
+            eprintln!("  {}", dim("valid: none, mollusk, quasarsvm-rust, quasarsvm-web3js, quasarsvm-kit"));
+            std::process::exit(1);
+        }
+    }
+    if let Some(ref t) = template_override {
+        if !matches!(t.as_str(), "minimal" | "full") {
+            eprintln!("  {}", crate::style::fail(&format!("unknown template: {t}")));
+            eprintln!("  {}", dim("valid: minimal, full"));
+            std::process::exit(1);
+        }
+    }
+    if let Some(ref t) = toolchain_override {
+        if !matches!(t.as_str(), "solana" | "upstream") {
+            eprintln!("  {}", crate::style::fail(&format!("unknown toolchain: {t}")));
+            eprintln!("  {}", dim("valid: solana, upstream"));
+            std::process::exit(1);
+        }
+    }
+
+    if globals.ui.animation && !skip_prompts {
         print_banner();
     }
 
@@ -458,14 +549,17 @@ pub fn run(
         }
     }
 
-    // Save preferences for next time
+    // Save preferences for next time (disable animation after first run)
     let new_globals = GlobalConfig {
         defaults: GlobalDefaults {
             toolchain: Some(toolchain.to_string()),
             framework: Some(framework.to_string()),
             template: Some(template.to_string()),
         },
-        ui: globals.ui,
+        ui: UiConfig {
+            animation: false,
+            ..globals.ui
+        },
     };
     let _ = new_globals.save(); // best-effort
 
@@ -676,7 +770,7 @@ client = []
 debug = []
 
 [dependencies]
-quasar-core = {{ git = "https://github.com/blueshift-gg/quasar" }}
+quasar-lang = {{ git = "https://github.com/blueshift-gg/quasar" }}
 "#,
     );
 
@@ -744,7 +838,7 @@ fn generate_lib_rs(
             format!(
                 r#"#![cfg_attr(not(test), no_std)]
 
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 mod instructions;
 use instructions::*;
@@ -767,7 +861,7 @@ mod {module_name} {{
             format!(
                 r#"#![cfg_attr(not(test), no_std)]
 
-use quasar_core::prelude::*;
+use quasar_lang::prelude::*;
 
 mod events;
 mod instructions;
@@ -834,10 +928,10 @@ fn generate_test_ts(name: &str, framework: Framework, toolchain: Toolchain) -> S
 
     if framework.is_kit() {
         format!(
-            r#"import {{ generateKeyPairSigner, address, lamports, Account }} from "@solana/kit";
+            r#"import {{ generateKeyPairSigner }} from "@solana/kit";
 import {{ {class_name}Client, PROGRAM_ADDRESS }} from "../target/client/typescript/{module_name}/kit";
 import {{ describe, it, run }} from "mocha";
-import {{ QuasarSvm }} from "@blueshift-gg/quasar-svm/kit";
+import {{ QuasarSvm, createKeyedSystemAccount }} from "@blueshift-gg/quasar-svm/kit";
 import {{ readFile }} from "node:fs/promises";
 import {{ assert }} from "chai";
 
@@ -845,9 +939,8 @@ const {class_name}Program = new {class_name}Client();
 
 describe("{class_name} Program", async () => {{
 
-  const vm = new QuasarSvm()
-    .addSystemProgram()
-    .addProgram(PROGRAM_ADDRESS, await readFile("target/deploy/{so_name}.so"))
+  const vm = new QuasarSvm();
+  vm.addProgram(PROGRAM_ADDRESS, await readFile("target/deploy/{so_name}.so"));
 
   const payer = await generateKeyPairSigner();
 
@@ -856,18 +949,9 @@ describe("{class_name} Program", async () => {{
       payer: payer.address,
     }});
 
-    const accounts: Account<Uint8Array>[] = [
-      {{
-        address: payer.address,
-        data: new Uint8Array(),
-        executable: false,
-        lamports: lamports(1_000_000_000n),
-        programAddress: address("11111111111111111111111111111111"),
-        space: 0n,
-      }}
-    ];
-
-    const result = vm.processInstruction(initializeInstruction, accounts);
+    const result = vm.processInstruction(initializeInstruction, [
+      createKeyedSystemAccount(payer.address),
+    ]);
 
     assert.isTrue(result.status.ok, `initialize failed:\n${{result.logs.join("\n")}}`);
   }});
@@ -878,19 +962,18 @@ describe("{class_name} Program", async () => {{
         )
     } else {
         format!(
-            r#"import {{ Keypair, SystemProgram, KeyedAccountInfo }} from "@solana/web3.js";
+            r#"import {{ Keypair }} from "@solana/web3.js";
 import {{ {class_name}Client }} from "../target/client/typescript/{module_name}/web3.js";
 import {{ readFile }} from "node:fs/promises";
 import {{ describe, it, run }} from "mocha";
 import {{ assert }} from "chai";
-import {{ QuasarSvm }} from "@blueshift-gg/quasar-svm/web3.js";
+import {{ QuasarSvm, createKeyedSystemAccount }} from "@blueshift-gg/quasar-svm/web3.js";
 
 const {class_name}Program = new {class_name}Client();
 
 describe("{class_name} Program", async () => {{
-  const vm = new QuasarSvm()
-    .addSystemProgram()
-    .addProgram({class_name}Client.programId, await readFile("target/deploy/{so_name}.so"));
+  const vm = new QuasarSvm();
+  vm.addProgram({class_name}Client.programId, await readFile("target/deploy/{so_name}.so"));
 
   const {{ publicKey: payer }} = await Keypair.generate();
 
@@ -899,20 +982,9 @@ describe("{class_name} Program", async () => {{
       payer,
     }});
 
-    const accounts = [
-      {{
-        accountId: payer,
-        accountInfo: {{
-          executable: false,
-          owner: SystemProgram.programId,
-          lamports: 1_000_000_000n,
-          data: new Uint8Array(),
-          rentEpoch: 0n,
-        }},
-      }} as KeyedAccountInfo,
-    ];
-
-    const result = vm.processInstruction(initializeInstruction, accounts);
+    const result = vm.processInstruction(initializeInstruction, [
+      createKeyedSystemAccount(payer),
+    ]);
 
     assert.isTrue(result.status.ok, `initialize failed:\n${{result.logs.join("\n")}}`);
   }});
@@ -999,7 +1071,7 @@ fn test_initialize() {{
             format!(
                 r#"extern crate std;
 
-use quasar_svm::{{Account, ExecutionStatus, Instruction, Pubkey, QuasarSvm}};
+use quasar_svm::{{Account, Instruction, Pubkey, QuasarSvm}};
 use solana_address::Address;
 
 use {client_crate}::InitializeInstruction;
@@ -1015,23 +1087,25 @@ fn test_initialize() {{
     let mut svm = setup();
 
     let payer = Pubkey::new_unique();
-    let system_program = quasar_svm::system_program::ID;
 
     let instruction: Instruction = InitializeInstruction {{
         payer: Address::from(payer.to_bytes()),
-        system_program: Address::from(system_program.to_bytes()),
+        system_program: Address::from(quasar_svm::system_program::ID.to_bytes()),
     }}
     .into();
 
-    let result = svm.process_transaction(
-        &[instruction],
-        &[(payer, Account::new(10_000_000_000, 0, &system_program))],
+    let result = svm.process_instruction(
+        &instruction,
+        &[Account {{
+            address: payer,
+            lamports: 10_000_000_000,
+            data: vec![],
+            owner: quasar_svm::system_program::ID,
+            executable: false,
+        }}],
     );
 
-    match result.status() {{
-        ExecutionStatus::Success => {{}},
-        ExecutionStatus::Err(e) => panic!("initialize failed: {{e}}\n{{:?}}", result.logs),
-    }}
+    result.assert_success();
 }}
 "#
             )
@@ -1095,7 +1169,7 @@ const INSTRUCTIONS_MOD: &str = r#"mod initialize;
 pub use initialize::*;
 "#;
 
-const INSTRUCTION_INITIALIZE: &str = r#"use quasar_core::prelude::*;
+const INSTRUCTION_INITIALIZE: &str = r#"use quasar_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -1111,7 +1185,7 @@ impl<'info> Initialize<'info> {
 }
 "#;
 
-const STATE_RS: &str = r#"use quasar_core::prelude::*;
+const STATE_RS: &str = r#"use quasar_lang::prelude::*;
 
 #[account(discriminator = 1)]
 pub struct MyAccount {
@@ -1120,7 +1194,7 @@ pub struct MyAccount {
 }
 "#;
 
-const EVENTS_RS: &str = r#"use quasar_core::prelude::*;
+const EVENTS_RS: &str = r#"use quasar_lang::prelude::*;
 
 #[event(discriminator = 0)]
 pub struct InitializeEvent {

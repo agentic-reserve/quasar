@@ -1,4 +1,4 @@
-use {crate::events::MultiEvent, quasar_core::prelude::*};
+use {crate::events::MultiEvent, quasar_lang::prelude::*};
 
 #[derive(Accounts)]
 pub struct EmitMultiField<'info> {
