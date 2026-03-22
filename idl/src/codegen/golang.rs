@@ -169,8 +169,7 @@ pub fn generate_go_client(idl: &Idl) -> String {
         for acc in &ix.accounts {
             let key_expr = if let Some(ref addr) = acc.address {
                 format!("solana.MustPublicKeyFromBase58(\"{}\")", addr)
-            } else if acc.pda.is_some() {
-                let pda = acc.pda.as_ref().unwrap();
+            } else if let Some(ref pda) = acc.pda {
                 let mut seeds = Vec::new();
                 for seed in &pda.seeds {
                     match seed {

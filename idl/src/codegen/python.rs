@@ -199,9 +199,7 @@ pub fn generate_python_client(idl: &Idl) -> String {
         for acc in &ix.accounts {
             let key_expr = if let Some(ref addr) = acc.address {
                 format!("Pubkey.from_string(\"{}\")", addr)
-            } else if acc.pda.is_some() {
-                // PDA derivation
-                let pda = acc.pda.as_ref().unwrap();
+            } else if let Some(ref pda) = acc.pda {
                 let mut seeds = Vec::new();
                 for seed in &pda.seeds {
                     match seed {
