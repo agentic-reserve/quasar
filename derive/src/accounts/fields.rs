@@ -107,8 +107,8 @@ fn resolve_token_program_addr(
     if let Some(inner) = extract_generic_inner_type(underlying, "Account") {
         if let Some(name) = type_base_name(inner) {
             match name.as_str() {
-                "Token" => return quote! { &quasar_spl::SPL_TOKEN_ID },
-                "Token2022" => return quote! { &quasar_spl::TOKEN_2022_ID },
+                "Token" | "Mint" => return quote! { &quasar_spl::SPL_TOKEN_ID },
+                "Token2022" | "Mint2022" => return quote! { &quasar_spl::TOKEN_2022_ID },
                 _ => {}
             }
         }
@@ -542,7 +542,8 @@ pub(super) fn process_fields(
             let is_init = a.is_init || a.init_if_needed;
             let needs_program = a.token_mint.is_some()
                 || (a.associated_token_mint.is_some()
-                    && a.associated_token_token_program.is_none());
+                    && a.associated_token_token_program.is_none())
+                || a.mint_decimals.is_some();
             !is_init && needs_program && is_interface_account_field(f)
         });
 
@@ -1284,6 +1285,30 @@ pub(super) fn process_fields(
                     #field_name.to_account_view(),
                     #mint_field.to_account_view().address(),
                     #auth_field.to_account_view().address(),
+                    #token_program_addr,
+                )?;
+            });
+        }
+
+        // --- Non-init mint validation ---
+
+        if let (false, Some(decimals_expr), Some(auth_field)) = (
+            is_init_field,
+            attrs.mint_decimals.as_ref(),
+            attrs.mint_init_authority.as_ref(),
+        ) {
+            let token_program_addr = resolve_token_program_addr(effective_ty, token_program_field);
+            let freeze_expr = if let Some(freeze_field) = &attrs.mint_freeze_authority {
+                quote! { Some(#freeze_field.to_account_view().address()) }
+            } else {
+                quote! { None }
+            };
+            pda_checks.push(quote! {
+                quasar_spl::validate_mint(
+                    #field_name.to_account_view(),
+                    #auth_field.to_account_view().address(),
+                    (#decimals_expr) as u8,
+                    #freeze_expr,
                     #token_program_addr,
                 )?;
             });

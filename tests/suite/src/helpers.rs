@@ -4,6 +4,7 @@ use {
         Account, Pubkey, QuasarSvm,
     },
     solana_program_pack::Pack,
+    spl_token_interface::state::AccountState,
 };
 
 // ---------------------------------------------------------------------------
@@ -58,7 +59,7 @@ pub fn token_account(
             mint,
             owner,
             amount,
-            state: spl_token::state::AccountState::Initialized,
+            state: AccountState::Initialized,
             ..TokenAccount::default()
         },
         &token_program,
@@ -81,7 +82,7 @@ pub fn token_account_with_delegate(
             owner,
             amount,
             delegate: Some(delegate).into(),
-            state: spl_token::state::AccountState::Initialized,
+            state: AccountState::Initialized,
             delegated_amount,
             ..TokenAccount::default()
         },
@@ -155,7 +156,7 @@ pub fn pack_token_data(mint: Pubkey, owner: Pubkey, amount: u64) -> Vec<u8> {
         mint,
         owner,
         amount,
-        state: spl_token::state::AccountState::Initialized,
+        state: AccountState::Initialized,
         ..TokenAccount::default()
     };
     let mut data = vec![0u8; TokenAccount::LEN];
