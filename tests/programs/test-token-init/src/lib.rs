@@ -84,4 +84,44 @@ mod quasar_test_token_init {
     pub fn init_if_needed_mint_with_freeze_t22(ctx: Ctx<InitIfNeededMintWithFreezeT22>) -> Result<(), ProgramError> {
         ctx.accounts.handler()
     }
+
+    #[instruction(discriminator = 15)]
+    pub fn init_token_pda(ctx: Ctx<InitTokenPda>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 16)]
+    pub fn init_token_pda_t22(ctx: Ctx<InitTokenPdaT22>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 17)]
+    pub fn init_mint_pda(ctx: Ctx<InitMintPda>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 18)]
+    pub fn init_mint_pda_t22(ctx: Ctx<InitMintPdaT22>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 19)]
+    pub fn init_token_interface(ctx: Ctx<InitTokenInterface>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 20)]
+    pub fn init_if_needed_token_interface(ctx: Ctx<InitIfNeededTokenInterface>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 21)]
+    pub fn init_mint_interface(ctx: Ctx<InitMintInterface>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 22)]
+    pub fn init_if_needed_mint_interface(ctx: Ctx<InitIfNeededMintInterface>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
 }

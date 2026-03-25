@@ -93,3 +93,12 @@ pub use close_token_account_t22::CloseTokenAccountT22;
 
 pub mod close_token_account_interface;
 pub use close_token_account_interface::CloseTokenAccountInterface;
+
+pub mod close_token;
+pub use close_token::CloseToken;
+
+pub mod close_token_t22;
+pub use close_token_t22::CloseTokenT22;
+
+pub mod close_token_interface;
+pub use close_token_interface::CloseTokenInterface;

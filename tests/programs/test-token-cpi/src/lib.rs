@@ -194,4 +194,19 @@ mod quasar_test_token_cpi {
     ) -> Result<(), ProgramError> {
         ctx.accounts.handler()
     }
+
+    #[instruction(discriminator = 32)]
+    pub fn close_token(ctx: Ctx<CloseToken>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 33)]
+    pub fn close_token_t22(ctx: Ctx<CloseTokenT22>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 34)]
+    pub fn close_token_interface(ctx: Ctx<CloseTokenInterface>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
 }

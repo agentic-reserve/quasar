@@ -479,8 +479,23 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
         let close_stmts: Vec<proc_macro2::TokenStream> = pf
             .close_fields
             .iter()
-            .map(|(field, dest)| {
-                quote! { self.#field.close(self.#dest.to_account_view())?; }
+            .map(|info| {
+                let field = &info.field;
+                let dest = &info.destination;
+                if let Some(cpi) = &info.cpi_close {
+                    // Token/mint: CPI close via the token program.
+                    let tp = &cpi.token_program;
+                    let auth = &cpi.authority;
+                    quote! {
+                        {
+                            use quasar_spl::TokenClose as _;
+                            self.#field.close(self.#tp, self.#dest, self.#auth).invoke()?;
+                        }
+                    }
+                } else {
+                    // Framework close: zero + drain + reassign.
+                    quote! { self.#field.close(self.#dest.to_account_view())?; }
+                }
             })
             .collect();
         quote! {

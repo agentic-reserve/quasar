@@ -26,8 +26,6 @@ mod remaining;
 #[cfg(test)]
 mod sysvar;
 #[cfg(test)]
-mod token_cpi;
-#[cfg(test)]
 mod token_state;
 
 // QuasarSVM-based SPL test suite
@@ -53,5 +51,13 @@ mod test_cpi_approve_revoke;
 mod test_cpi_mint_burn;
 #[cfg(test)]
 mod test_cpi_close;
+#[cfg(test)]
+mod test_close_attr;
+#[cfg(test)]
+mod test_init_token_pda;
+#[cfg(test)]
+mod test_init_mint_pda;
+#[cfg(test)]
+mod test_init_interface;
 #[cfg(test)]
 mod test_ata_derivation;

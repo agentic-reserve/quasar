@@ -12,6 +12,19 @@ use {
     syn::{Expr, Ident, Type},
 };
 
+/// Info for a single `#[account(close = dest)]` field.
+pub(super) struct CloseFieldInfo {
+    pub field: Ident,
+    pub destination: Ident,
+    /// For token/mint types, CPI close requires the token program and authority.
+    pub cpi_close: Option<CpiCloseInfo>,
+}
+
+pub(super) struct CpiCloseInfo {
+    pub token_program: Ident,
+    pub authority: Ident,
+}
+
 pub(super) struct ProcessedFields {
     pub field_constructs: Vec<proc_macro2::TokenStream>,
     pub has_one_checks: Vec<proc_macro2::TokenStream>,
@@ -26,7 +39,7 @@ pub(super) struct ProcessedFields {
     pub field_attrs: Vec<AccountFieldAttrs>,
     pub init_pda_checks: Vec<proc_macro2::TokenStream>,
     pub init_blocks: Vec<proc_macro2::TokenStream>,
-    pub close_fields: Vec<(Ident, Ident)>,
+    pub close_fields: Vec<CloseFieldInfo>,
     pub needs_rent: bool,
 }
 
@@ -88,6 +101,27 @@ fn is_interface_account_field(field: &syn::Field) -> bool {
         other => other,
     };
     extract_generic_inner_type(ty, "InterfaceAccount").is_some()
+}
+
+/// Check if a field's type wraps a token or mint inner type
+/// (`Account<Token>`, `Account<Token2022>`, `Account<Mint>`, `Account<Mint2022>`,
+/// `InterfaceAccount<Token>`, `InterfaceAccount<Mint>`).
+fn is_token_or_mint_field(field: &syn::Field) -> bool {
+    const TOKEN_MINT_TYPES: &[&str] = &["Token", "Token2022", "Mint", "Mint2022"];
+    let ty = match &field.ty {
+        Type::Reference(r) => &*r.elem,
+        other => other,
+    };
+    for wrapper in &["Account", "InterfaceAccount"] {
+        if let Some(inner) = extract_generic_inner_type(ty, wrapper) {
+            if let Some(base) = type_base_name(inner) {
+                if TOKEN_MINT_TYPES.contains(&base.as_str()) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
 }
 
 /// Resolve the token program address expression for a non-init field based on
@@ -388,6 +422,10 @@ fn validate_field_attrs(
         "#[account(realloc)] and #[account(init)] cannot be used on the same field"
     );
     reject!(
+        attrs.realloc.is_some() && is_token_or_mint_field(field),
+        "#[account(realloc)] cannot be used on token or mint accounts — their size is fixed by the token program"
+    );
+    reject!(
         attrs.token_mint.is_some() && attrs.associated_token_mint.is_some(),
         "`token::*` and `associated_token::*` cannot be used on the same field"
     );
@@ -532,6 +570,12 @@ pub(super) fn process_fields(
         None
     };
 
+    // Close on token/mint types requires a token program field for CPI close.
+    let has_any_token_close = field_attrs
+        .iter()
+        .zip(fields.iter())
+        .any(|(a, f)| a.close.is_some() && is_token_or_mint_field(f));
+
     // Non-init InterfaceAccount fields with token/ata attrs need a runtime
     // token_program_field. Account<Token>/Account<Token2022> resolve at compile
     // time and do NOT require one.
@@ -552,6 +596,7 @@ pub(super) fn process_fields(
         || has_any_mint_init
         || has_any_master_edition_init
         || has_any_non_init_interface_needing_program
+        || has_any_token_close
     {
         // Check for multiple token program fields when InterfaceAccount ATA attrs
         // don't specify an explicit program — ambiguity must be resolved by the user.
@@ -656,7 +701,7 @@ pub(super) fn process_fields(
     let mut seed_addr_captures: Vec<proc_macro2::TokenStream> = Vec::new();
     let mut init_pda_checks: Vec<proc_macro2::TokenStream> = Vec::new();
     let mut init_blocks: Vec<proc_macro2::TokenStream> = Vec::new();
-    let mut close_fields: Vec<(Ident, Ident)> = Vec::new();
+    let mut close_fields: Vec<CloseFieldInfo> = Vec::new();
 
     for (field, attrs) in fields.iter().zip(field_attrs.iter()) {
         let field_name = field.ident.as_ref().unwrap();
@@ -896,7 +941,46 @@ pub(super) fn process_fields(
         // --- Close field tracking ---
 
         if let Some(dest) = &attrs.close {
-            close_fields.push((field_name.clone(), dest.clone()));
+            let cpi_close = if is_token_or_mint_field(field) {
+                // Token/mint accounts require CPI close via the token program.
+                // Resolve the authority from token::authority (or associated_token::authority).
+                let authority = attrs
+                    .token_authority
+                    .clone()
+                    .or_else(|| attrs.associated_token_authority.clone())
+                    .ok_or_else(|| -> proc_macro::TokenStream {
+                        syn::Error::new_spanned(
+                            field_name,
+                            "#[account(close)] on token/mint types requires `token::authority`",
+                        )
+                        .to_compile_error()
+                        .into()
+                    })?;
+                // Find the token program field.
+                let tp_field: Ident =
+                    token_program_field
+                        .cloned()
+                        .ok_or_else(|| -> proc_macro::TokenStream {
+                            syn::Error::new_spanned(
+                                field_name,
+                                "#[account(close)] on token/mint types requires a token program \
+                                 field",
+                            )
+                            .to_compile_error()
+                            .into()
+                        })?;
+                Some(CpiCloseInfo {
+                    token_program: tp_field,
+                    authority,
+                })
+            } else {
+                None
+            };
+            close_fields.push(CloseFieldInfo {
+                field: field_name.clone(),
+                destination: dest.clone(),
+                cpi_close,
+            });
         }
 
         // --- PDA seeds + init code generation ---
