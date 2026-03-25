@@ -27,6 +27,7 @@ pub(super) enum AccountDirective {
     AssociatedTokenMint(Ident),
     AssociatedTokenAuthority(Ident),
     AssociatedTokenTokenProgram(Ident),
+    Sweep(Ident),
     Realloc(Expr),
     ReallocPayer(Ident),
     MetadataName(Expr),
@@ -111,6 +112,11 @@ impl Parse for AccountDirective {
                 } else {
                     Ok(Self::Bump(None))
                 }
+            }
+            "sweep" => {
+                let _: Token![=] = input.parse()?;
+                let ident: Ident = input.parse()?;
+                Ok(Self::Sweep(ident))
             }
             "realloc" => {
                 if input.peek(Token![::]) {
@@ -249,6 +255,7 @@ pub(super) struct AccountFieldAttrs {
     pub init_if_needed: bool,
     pub dup: bool,
     pub close: Option<Ident>,
+    pub sweep: Option<Ident>,
     pub payer: Option<Ident>,
     pub space: Option<Expr>,
     pub has_ones: Vec<(Ident, Option<Expr>)>,
@@ -285,6 +292,7 @@ impl Parse for AccountFieldAttrs {
                 AccountDirective::InitIfNeeded => r.init_if_needed = true,
                 AccountDirective::Dup => r.dup = true,
                 AccountDirective::Close(v) => r.close = Some(v),
+                AccountDirective::Sweep(v) => r.sweep = Some(v),
                 AccountDirective::Payer(v) => r.payer = Some(v),
                 AccountDirective::Space(v) => r.space = Some(v),
                 AccountDirective::HasOne(id, err) => r.has_ones.push((id, err)),

@@ -25,6 +25,15 @@ pub(super) struct CpiCloseInfo {
     pub authority: Ident,
 }
 
+/// Info for a single `#[account(sweep = receiver)]` field.
+pub(super) struct SweepFieldInfo {
+    pub field: Ident,
+    pub receiver: Ident,
+    pub mint: Ident,
+    pub authority: Ident,
+    pub token_program: Ident,
+}
+
 pub(super) struct ProcessedFields {
     pub field_constructs: Vec<proc_macro2::TokenStream>,
     pub has_one_checks: Vec<proc_macro2::TokenStream>,
@@ -40,6 +49,7 @@ pub(super) struct ProcessedFields {
     pub init_pda_checks: Vec<proc_macro2::TokenStream>,
     pub init_blocks: Vec<proc_macro2::TokenStream>,
     pub close_fields: Vec<CloseFieldInfo>,
+    pub sweep_fields: Vec<SweepFieldInfo>,
     pub needs_rent: bool,
 }
 
@@ -122,6 +132,35 @@ fn is_token_or_mint_field(field: &syn::Field) -> bool {
         }
     }
     false
+}
+
+/// Check if a field's type wraps a token account inner type (not mint).
+/// (`Account<Token>`, `Account<Token2022>`, `InterfaceAccount<Token>`).
+fn is_token_account_field(field: &syn::Field) -> bool {
+    const TOKEN_TYPES: &[&str] = &["Token", "Token2022"];
+    let ty = match &field.ty {
+        Type::Reference(r) => &*r.elem,
+        other => other,
+    };
+    for wrapper in &["Account", "InterfaceAccount"] {
+        if let Some(inner) = extract_generic_inner_type(ty, wrapper) {
+            if let Some(base) = type_base_name(inner) {
+                if TOKEN_TYPES.contains(&base.as_str()) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Check if a field's type is `Signer` (or `&Signer` / `&mut Signer`).
+fn is_signer_field(field: &syn::Field) -> bool {
+    let ty = match &field.ty {
+        Type::Reference(r) => &*r.elem,
+        other => other,
+    };
+    type_base_name(ty).as_deref() == Some("Signer")
 }
 
 /// Resolve the token program address expression for a non-init field based on
@@ -425,6 +464,25 @@ fn validate_field_attrs(
         attrs.realloc.is_some() && is_token_or_mint_field(field),
         "#[account(realloc)] cannot be used on token or mint accounts — their size is fixed by the token program"
     );
+
+    // Sweep validations
+    reject!(
+        attrs.sweep.is_some() && !is_writable,
+        "#[account(sweep)] requires `&mut` reference or `#[account(mut)]`"
+    );
+    reject!(
+        attrs.sweep.is_some() && !is_token_account_field(field),
+        "#[account(sweep)] is only valid on token accounts, not mint accounts"
+    );
+    reject!(
+        attrs.sweep.is_some() && attrs.token_mint.is_none(),
+        "#[account(sweep)] requires `token::mint` (needed for transfer_checked decimals)"
+    );
+    reject!(
+        attrs.sweep.is_some() && attrs.token_authority.is_none(),
+        "#[account(sweep)] requires `token::authority` (needed for transfer signer)"
+    );
+
     reject!(
         attrs.token_mint.is_some() && attrs.associated_token_mint.is_some(),
         "`token::*` and `associated_token::*` cannot be used on the same field"
@@ -576,6 +634,9 @@ pub(super) fn process_fields(
         .zip(fields.iter())
         .any(|(a, f)| a.close.is_some() && is_token_or_mint_field(f));
 
+    // Sweep requires a token program field for transfer_checked CPI.
+    let has_any_sweep = field_attrs.iter().any(|a| a.sweep.is_some());
+
     // Non-init InterfaceAccount fields with token/ata attrs need a runtime
     // token_program_field. Account<Token>/Account<Token2022> resolve at compile
     // time and do NOT require one.
@@ -597,6 +658,7 @@ pub(super) fn process_fields(
         || has_any_master_edition_init
         || has_any_non_init_interface_needing_program
         || has_any_token_close
+        || has_any_sweep
     {
         // Check for multiple token program fields when InterfaceAccount ATA attrs
         // don't specify an explicit program — ambiguity must be resolved by the user.
@@ -702,6 +764,7 @@ pub(super) fn process_fields(
     let mut init_pda_checks: Vec<proc_macro2::TokenStream> = Vec::new();
     let mut init_blocks: Vec<proc_macro2::TokenStream> = Vec::new();
     let mut close_fields: Vec<CloseFieldInfo> = Vec::new();
+    let mut sweep_fields: Vec<SweepFieldInfo> = Vec::new();
 
     for (field, attrs) in fields.iter().zip(field_attrs.iter()) {
         let field_name = field.ident.as_ref().unwrap();
@@ -980,6 +1043,73 @@ pub(super) fn process_fields(
                 field: field_name.clone(),
                 destination: dest.clone(),
                 cpi_close,
+            });
+        }
+
+        // --- Sweep field tracking ---
+
+        if let Some(receiver) = &attrs.sweep {
+            // Validate the sweep target field exists and is a token account type.
+            let receiver_field = fields
+                .iter()
+                .find(|f| f.ident.as_ref() == Some(receiver))
+                .ok_or_else(|| -> proc_macro::TokenStream {
+                    syn::Error::new_spanned(
+                        receiver,
+                        format!("sweep target `{}` not found in accounts struct", receiver),
+                    )
+                    .to_compile_error()
+                    .into()
+                })?;
+            if !is_token_account_field(receiver_field) {
+                return Err(syn::Error::new_spanned(
+                    receiver,
+                    "sweep target must be a token account (Account<Token>, Account<Token2022>, or InterfaceAccount<Token>)",
+                )
+                .to_compile_error()
+                .into());
+            }
+            // Validate target is mutable.
+            let target_is_mut = matches!(&receiver_field.ty, Type::Reference(r) if r.mutability.is_some())
+                || field_attrs.iter().zip(fields.iter()).any(|(a, f)| {
+                    f.ident.as_ref() == Some(receiver) && a.is_mut
+                });
+            if !target_is_mut {
+                return Err(syn::Error::new_spanned(
+                    receiver,
+                    "sweep target must be mutable (`&mut` or `#[account(mut)]`)",
+                )
+                .to_compile_error()
+                .into());
+            }
+            // Validate token::authority is a Signer.
+            if let Some(auth_name) = &attrs.token_authority {
+                let auth_field = fields
+                    .iter()
+                    .find(|f| f.ident.as_ref() == Some(auth_name));
+                if let Some(af) = auth_field {
+                    if !is_signer_field(af) {
+                        return Err(syn::Error::new_spanned(
+                            auth_name,
+                            "sweep requires `token::authority` to be a Signer \
+                             (it must sign the transfer_checked CPI)",
+                        )
+                        .to_compile_error()
+                        .into());
+                    }
+                }
+            }
+
+            let mint = attrs.token_mint.clone().unwrap();
+            let authority = attrs.token_authority.clone().unwrap();
+            let tp_field = token_program_field.cloned().unwrap();
+
+            sweep_fields.push(SweepFieldInfo {
+                field: field_name.clone(),
+                receiver: receiver.clone(),
+                mint,
+                authority,
+                token_program: tp_field,
             });
         }
 
@@ -1495,6 +1625,7 @@ pub(super) fn process_fields(
         init_pda_checks,
         init_blocks,
         close_fields,
+        sweep_fields,
         needs_rent,
     })
 }

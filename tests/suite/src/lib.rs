@@ -60,4 +60,6 @@ mod test_init_mint_pda;
 #[cfg(test)]
 mod test_init_interface;
 #[cfg(test)]
+mod test_sweep;
+#[cfg(test)]
 mod test_ata_derivation;

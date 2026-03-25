@@ -475,7 +475,39 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
 
     // --- Epilogue generation ---
 
-    let epilogue_method = if !pf.close_fields.is_empty() {
+    let has_epilogue = !pf.sweep_fields.is_empty() || !pf.close_fields.is_empty();
+    let epilogue_method = if has_epilogue {
+        // Sweep stmts run FIRST — transfer remaining tokens out.
+        let sweep_stmts: Vec<proc_macro2::TokenStream> = pf
+            .sweep_fields
+            .iter()
+            .map(|info| {
+                let field = &info.field;
+                let receiver = &info.receiver;
+                let mint = &info.mint;
+                let auth = &info.authority;
+                let tp = &info.token_program;
+                quote! {
+                    {
+                        use quasar_spl::TokenCpi as _;
+                        let __sweep_amount = self.#field.amount();
+                        if __sweep_amount > 0 {
+                            let __sweep_decimals = self.#mint.decimals();
+                            self.#tp.transfer_checked(
+                                self.#field,
+                                self.#mint,
+                                self.#receiver,
+                                self.#auth,
+                                __sweep_amount,
+                                __sweep_decimals,
+                            ).invoke()?;
+                        }
+                    }
+                }
+            })
+            .collect();
+
+        // Close stmts run AFTER sweeps.
         let close_stmts: Vec<proc_macro2::TokenStream> = pf
             .close_fields
             .iter()
@@ -498,9 +530,11 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
                 }
             })
             .collect();
+
         quote! {
             #[inline(always)]
             fn epilogue(&mut self) -> Result<(), ProgramError> {
+                #(#sweep_stmts)*
                 #(#close_stmts)*
                 Ok(())
             }

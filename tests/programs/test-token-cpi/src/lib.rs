@@ -209,4 +209,36 @@ mod quasar_test_token_cpi {
     pub fn close_token_interface(ctx: Ctx<CloseTokenInterface>) -> Result<(), ProgramError> {
         ctx.accounts.handler()
     }
+
+    #[instruction(discriminator = 35)]
+    pub fn sweep_token(ctx: Ctx<SweepToken>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 36)]
+    pub fn sweep_and_close(ctx: Ctx<SweepAndClose>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 37)]
+    pub fn sweep_token_t22(ctx: Ctx<SweepTokenT22>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 38)]
+    pub fn sweep_token_interface(ctx: Ctx<SweepTokenInterface>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 39)]
+    pub fn sweep_and_close_t22(ctx: Ctx<SweepAndCloseT22>) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
+
+    #[instruction(discriminator = 40)]
+    pub fn sweep_and_close_interface(
+        ctx: Ctx<SweepAndCloseInterface>,
+    ) -> Result<(), ProgramError> {
+        ctx.accounts.handler()
+    }
 }
