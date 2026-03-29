@@ -184,10 +184,9 @@ pub fn init_account(
         // to the PDA address). We can't use CreateAccount (it fails if the
         // account has a non-zero balance), so we use three system CPIs:
         //   1. Transfer  — top up to rent-exempt minimum (skip if already enough)
-        //   2. Allocate  — set data space (must be a CPI, not raw resize —
-        //                   the SVM tracks original data_len from serialization
-        //                   and rejects direct mutations on accounts that were
-        //                   not program-owned at serialization time)
+        //   2. Allocate  — set data space (must be a CPI, not raw resize — the SVM
+        //      tracks original data_len from serialization and rejects direct mutations
+        //      on accounts that were not program-owned at serialization time)
         //   3. Assign    — transfer ownership to the target program
         //
         // TODO: Replace with single `CreateAccountAllowPrefund` CPI (system

@@ -281,4 +281,3 @@ pub fn prefunded_account(address: Pubkey, lamports: u64) -> Account {
         executable: false,
     }
 }
-
