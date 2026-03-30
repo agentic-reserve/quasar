@@ -23,7 +23,12 @@ pub(super) fn generate_dynamic_account(
 ) -> TokenStream {
     let vis = &input.vis;
     let attrs = &input.attrs;
-    let lt = &input.generics.lifetimes().next().expect("dynamic account struct must have a lifetime parameter").lifetime;
+    let lt = &input
+        .generics
+        .lifetimes()
+        .next()
+        .expect("dynamic account struct must have a lifetime parameter")
+        .lifetime;
     let zc_name = format_ident!("{}Zc", name);
 
     let dyn_fields: Vec<(&syn::Field, DynFieldKind<'_>)> = fields_data

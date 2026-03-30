@@ -299,7 +299,8 @@ pub fn declare_program(input: TokenStream) -> TokenStream {
             })
             .collect();
 
-        let (data_write, data_size) = generate_data_write(&ix.args, &ix.discriminator).expect("failed to generate instruction data write code");
+        let (data_write, data_size) = generate_data_write(&ix.args, &ix.discriminator)
+            .expect("failed to generate instruction data write code");
 
         // Free function: accounts as &'a AccountView
         let free_acct_params: Vec<TokenStream2> = acct_idents

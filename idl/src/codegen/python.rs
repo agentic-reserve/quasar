@@ -523,12 +523,9 @@ fn decode_field_expr(name: &str, ty: &IdlType, indent: usize, types: &[IdlTypeDe
                 _ => "data[offset:offset + 1]; offset += 1".to_string(),
             };
             format!(
-                "{pad}_count = struct.unpack_from(\"<{fmt}\", data, offset)[0]\n\
-                 {pad}offset += {sz}\n\
-                 {pad}{n} = []\n\
-                 {pad}for _ in range(_count):\n\
-                 {pad}    _item = {decode}\n\
-                 {pad}    {n}.append(_item)\n",
+                "{pad}_count = struct.unpack_from(\"<{fmt}\", data, offset)[0]\n{pad}offset += \
+                 {sz}\n{pad}{n} = []\n{pad}for _ in range(_count):\n{pad}    _item = \
+                 {decode}\n{pad}    {n}.append(_item)\n",
                 pad = pad,
                 n = name,
                 fmt = fmt,

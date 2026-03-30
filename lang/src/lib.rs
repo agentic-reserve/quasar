@@ -72,24 +72,6 @@ pub mod __internal {
     pub const NODUP_MUT_SIGNER: u32 = 0xFF | (1 << 8) | (1 << 16);
     /// Not borrowed + executable.
     pub const NODUP_EXECUTABLE: u32 = 0xFF | (1 << 24);
-
-
-}
-
-/// Header validation constants for manual `ParseAccounts` implementations.
-///
-/// These are the expected u32 values for the first 4 bytes of a `RuntimeAccount`.
-/// Use with `AccountView::account_ptr()` to perform fused flag checks.
-pub mod header {
-    pub use crate::__internal::{
-        NODUP, NODUP_EXECUTABLE, NODUP_MUT, NODUP_MUT_SIGNER, NODUP_SIGNER,
-    };
-
-    /// Mask for flag bytes only (skips the borrow_state byte).
-    ///
-    /// Apply with `&` before comparing a raw header against an expected constant
-    /// when the borrow_state is managed separately (dup-aware path).
-    pub const FLAG_MASK: u32 = 0xFFFFFF00;
 }
 
 /// Declarative macros: `define_account!`, `require!`, `require_eq!`, `emit!`.

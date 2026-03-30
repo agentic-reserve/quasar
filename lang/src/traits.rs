@@ -145,6 +145,11 @@ pub trait ParseAccounts<'info>: Sized {
         Self::parse(accounts, program_id)
     }
 
+    /// Set to `true` when overriding [`validate()`](Self::validate).
+    /// The dispatch path uses this to skip the call entirely when no
+    /// custom validation exists, avoiding a dead branch on sBPF.
+    const HAS_VALIDATE: bool = false;
+
     /// User-defined validation hook called after all field-level checks pass
     /// but before the instruction handler executes.
     ///
@@ -154,7 +159,8 @@ pub trait ParseAccounts<'info>: Sized {
     /// Lifecycle: `parse()` -> `validate()` -> handler -> `epilogue()`
     ///
     /// The signature is `&self` (not `&mut self`) — validation must not mutate
-    /// validated account references.
+    /// validated account references. You must also set `const HAS_VALIDATE:
+    /// bool = true;` for the hook to be called.
     #[inline(always)]
     fn validate(&self) -> Result<(), ProgramError> {
         Ok(())
