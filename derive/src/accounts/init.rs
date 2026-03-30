@@ -367,9 +367,9 @@ pub(super) fn gen_metadata_init(
             quasar_spl::metadata::MetadataCpi::create_metadata_accounts_v3(
                 #meta_prog, #meta_field, #field_name, #mint_auth,
                 #pay, #update_auth, #sys, #rent,
-                quasar_lang::borsh::BorshString::new(#meta_name),
-                quasar_lang::borsh::BorshString::new(#meta_symbol),
-                quasar_lang::borsh::BorshString::new(#meta_uri),
+                (#meta_name) as &[u8],
+                (#meta_symbol) as &[u8],
+                (#meta_uri) as &[u8],
                 #seller_fee, #is_mutable, true,
             ).invoke()?;
         }
