@@ -187,9 +187,14 @@ pub fn decode_header_error(header: u32, expected: u32) -> u64 {
         solana_program_log::log("account not writable");
         return u64::from(ProgramError::Immutable);
     }
+    if _exec != exp_exec {
+        #[cfg(feature = "debug")]
+        solana_program_log::log("account not executable");
+        return u64::from(ProgramError::InvalidAccountData);
+    }
 
     #[cfg(feature = "debug")]
-    solana_program_log::log("account not executable");
+    solana_program_log::log("unknown header validation failure");
     u64::from(ProgramError::InvalidAccountData)
 }
 

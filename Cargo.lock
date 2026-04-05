@@ -2174,8 +2174,10 @@ name = "quasar-lang"
 version = "0.0.0"
 dependencies = [
  "const-crypto",
+ "curve25519-dalek",
  "quasar-derive",
  "quasar-pod",
+ "sha2 0.10.9",
  "solana-account-view 2.0.0",
  "solana-address 2.3.0",
  "solana-define-syscall 5.0.0",

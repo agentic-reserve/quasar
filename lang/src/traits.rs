@@ -241,9 +241,25 @@ pub unsafe trait StaticView {}
 /// Used by `InterfaceAccount<T>` for zero-copy field access.
 ///
 /// Implemented by: `#[account]` macro (for SPL token/mint types).
+///
+/// # Safety
+///
+/// The `deref_from_mut` implementation must ensure that the returned mutable
+/// reference does not alias with any other mutable reference. Implementations
+/// should add debug assertions to catch duplicate account scenarios that could
+/// lead to undefined behavior.
 pub trait ZeroCopyDeref {
     type Target;
     fn deref_from(view: &AccountView) -> &Self::Target;
+    /// # Safety
+    ///
+    /// This method creates a mutable reference from an `AccountView`. Callers must
+    /// ensure that:
+    /// 1. The `AccountView` is not a duplicate (borrow_state != NOT_BORROWED)
+    /// 2. No other mutable references to the same underlying data exist
+    /// 3. The account has been properly validated for writability
+    ///
+    /// Violating these invariants leads to aliased mutable references (UB in Rust).
     #[allow(clippy::mut_from_ref)]
     fn deref_from_mut(view: &mut AccountView) -> &mut Self::Target;
 }

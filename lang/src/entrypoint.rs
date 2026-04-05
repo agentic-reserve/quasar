@@ -14,7 +14,10 @@ macro_rules! dispatch {
         $([$($disc_byte:literal),+] => $handler:ident($accounts_ty:ty)),+ $(,)?
     }) => {{
         // SAFETY: The SVM appends the 32-byte program ID immediately after
-        // instruction data in the input buffer.
+        // instruction data in the input buffer. Per SVM specification, the input
+        // buffer always contains: [account data][ix data len (u64)][ix data][program_id (32 bytes)].
+        // The SVM guarantees 32 bytes are available after ix_data. The cast to *[u8; 32]
+        // is valid because the SVM aligns program_id appropriately.
         let __program_id: &[u8; 32] = unsafe {
             &*($ix_data.as_ptr().add($ix_data.len()) as *const [u8; 32])
         };

@@ -131,6 +131,16 @@ macro_rules! impl_program_account {
             fn deref_from_mut(view: &mut AccountView) -> &mut Self::Target {
                 // SAFETY: Same as `deref_from` — caller ensures length
                 // and writable.
+                //
+                // Defensive check: Duplicate accounts should never reach
+                // here with mutable access. If they do, it indicates a
+                // serious bug that could lead to aliased mutable references.
+                // A duplicate account has borrow_state != NOT_BORROWED (0xFF).
+                debug_assert!(
+                    // SAFETY: RuntimeAccount pointer is always valid for AccountView
+                    unsafe { (*(view.account_ptr())).borrow_state } == quasar_lang::__internal::NOT_BORROWED,
+                    "Cannot create mutable reference to duplicate account: would violate Rust aliasing rules"
+                );
                 unsafe { &mut *(view.data_mut_ptr() as *mut $target) }
             }
         }

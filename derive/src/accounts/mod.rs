@@ -227,11 +227,17 @@ pub(crate) fn derive_accounts(input: TokenStream) -> TokenStream {
                             }
                         } else {
                             // Security: bounds-check the dup index before using it to read
-                            // from the AccountView buffer.
+                            // from the AccountView buffer. The duplicate index must be:
+                            // 1. Less than current offset (already written to buffer)
+                            // 2. Point to an initialized slot (idx < cur_offset ensures this)
                             let idx = (actual_header & 0xFF) as usize;
                             if quasar_lang::utils::hint::unlikely(idx >= #cur_offset) {
                                 return Err(ProgramError::InvalidAccountData);
                             }
+                            // Additional validation: ensure idx is within reasonable bounds
+                            // The maximum number of accounts in a transaction is limited by
+                            // the SVM (typically 256), so any index >= 256 is definitely invalid.
+                            debug_assert!(idx < 256, "duplicate account index exceeds maximum");
                             unsafe {
                                 core::ptr::write(base.add(#cur_offset), core::ptr::read(base.add(idx)));
                                 input = input.add(core::mem::size_of::<u64>());

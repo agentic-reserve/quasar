@@ -8,11 +8,9 @@
 //! `SolBytes`. The slice-of-slices cast exploits this to pass seed arrays
 //! directly to the syscall without intermediate copies.
 
-#[cfg(any(target_os = "solana", target_arch = "bpf"))]
-use solana_define_syscall::definitions::{sol_curve_validate_point, sol_sha256};
 use {solana_address::Address, solana_program_error::ProgramError};
 
-#[cfg(any(target_os = "solana", target_arch = "bpf"))]
+/// PDA marker bytes appended during derivation.
 const PDA_MARKER: &[u8; 21] = b"ProgramDerivedAddress";
 
 /// Verify that `expected` matches `sha256(seeds || program_id ||
@@ -33,6 +31,8 @@ pub fn verify_program_address(
 
     #[cfg(any(target_os = "solana", target_arch = "bpf"))]
     {
+        use solana_define_syscall::definitions::{sol_curve_validate_point, sol_sha256};
+        
         let n = seeds.len();
 
         // Build the input array: [seeds..., program_id, PDA_MARKER].
@@ -78,8 +78,24 @@ pub fn verify_program_address(
 
     #[cfg(not(any(target_os = "solana", target_arch = "bpf")))]
     {
-        let _ = (seeds, program_id, expected);
-        Err(ProgramError::InvalidArgument)
+        // Off-chain verification using pure Rust SHA-256.
+        // This enables unit tests to verify PDA logic without SVM.
+        use sha2::{Sha256, Digest};
+        
+        let mut hasher = Sha256::new();
+        for seed in seeds {
+            hasher.update(seed);
+        }
+        hasher.update(program_id.as_ref());
+        hasher.update(PDA_MARKER.as_slice());
+        let hash = hasher.finalize();
+        
+        let computed_addr = Address::new_from_array(hash.into());
+        if crate::keys_eq(&computed_addr, expected) {
+            Ok(())
+        } else {
+            Err(ProgramError::InvalidSeeds)
+        }
     }
 }
 
@@ -102,6 +118,8 @@ pub fn based_try_find_program_address(
 
     #[cfg(any(target_os = "solana", target_arch = "bpf"))]
     {
+        use solana_define_syscall::definitions::{sol_curve_validate_point, sol_sha256};
+        
         const CURVE25519_EDWARDS: u64 = 0;
         let n = seeds.len();
 
@@ -176,8 +194,53 @@ pub fn based_try_find_program_address(
 
     #[cfg(not(any(target_os = "solana", target_arch = "bpf")))]
     {
-        let _ = (seeds, program_id);
-        Err(ProgramError::InvalidArgument)
+        // Off-chain PDA finding using pure Rust SHA-256 and curve25519-dalek.
+        // Note: This requires the 'curve25519-dalek' feature to be enabled.
+        // Without the feature, this returns an error indicating the feature is needed.
+        
+        #[cfg(feature = "off-chain-pda")]
+        {
+            use sha2::{Sha256, Digest};
+            use curve25519_dalek::edwards::CompressedEdwardsY;
+            
+            let n = seeds.len();
+            let mut bump: u8 = u8::MAX;
+            
+            loop {
+                let mut hasher = Sha256::new();
+                for seed in seeds {
+                    hasher.update(seed);
+                }
+                hasher.update(&[bump]);
+                hasher.update(program_id.as_ref());
+                hasher.update(PDA_MARKER.as_slice());
+                let hash = hasher.finalize();
+                
+                // Check if hash is off-curve (valid PDA)
+                // A valid PDA is off the ed25519 curve
+                let compressed = CompressedEdwardsY::from_slice(&hash[..]);
+                if compressed.decompress().is_none() {
+                    // Off-curve: valid PDA
+                    return Ok((Address::new_from_array(hash.into()), bump));
+                }
+                
+                if bump == 0 {
+                    break;
+                }
+                bump -= 1;
+            }
+            
+            Err(ProgramError::InvalidSeeds)
+        }
+        
+        #[cfg(not(feature = "off-chain-pda"))]
+        {
+            let _ = (seeds, program_id);
+            // Provide a helpful error message indicating the feature is needed
+            panic!("Off-chain PDA finding requires the 'off-chain-pda' feature. \
+                    Enable it in Cargo.toml: quasar-lang = {{ features = ['off-chain-pda'] }} \
+                    Or use find_program_address_const for compile-time derivation.");
+        }
     }
 }
 
