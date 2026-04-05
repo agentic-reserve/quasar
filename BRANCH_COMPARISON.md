@@ -9,8 +9,8 @@
 
 ## Executive Summary
 
-Your fork is **ahead** of upstream master by **5 audit-related commits** containing:
-- Security bug fixes (3 critical fixes)
+Your fork is **ahead** of upstream master by **4 audit-related commits** containing:
+- Security bug fixes (5 critical fixes)
 - Comprehensive audit documentation (5 reports)
 - No conflicts with upstream branches
 
@@ -47,7 +47,7 @@ Your fork is **ahead** of upstream master by **5 audit-related commits** contain
 
 ### 1. upstream/master
 
-**Status:** Your fork is **5 commits ahead**
+**Status:** Your fork is **4 commits ahead**
 
 ```
 Your fork:  d2db00b docs: complete automated security audit reports
